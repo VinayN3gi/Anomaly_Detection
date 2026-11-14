@@ -332,3 +332,4 @@ class MonitoringRepository:
                 "min_response_time_ms": round(row.min_response_time_ms or 0.0, 2),
                 "max_response_time_ms": round(row.max_response_time_ms or 0.0, 2),
             }
+

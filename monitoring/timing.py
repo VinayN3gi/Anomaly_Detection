@@ -49,3 +49,4 @@ class TimingMetrics:
     def to_dict(self) -> dict[str, float | None]:
         """Convert metrics to a dictionary."""
         return asdict(self)
+

@@ -58,6 +58,7 @@ class WebsiteService:
         """
         # Validate security and anti-SSRF rules
         normalized_url, _, _ = validate_url_security(url)
+        min_interval = max(60, check_interval)
 
         now_iso = datetime.now(timezone.utc).isoformat()
         display_name = name.strip() if name and name.strip() else normalized_url
@@ -70,7 +71,7 @@ class WebsiteService:
             with get_db(self.db_path) as conn:
                 cursor = conn.execute(
                     query,
-                    (normalized_url, display_name, check_interval, now_iso, now_iso),
+                    (normalized_url, display_name, min_interval, now_iso, now_iso),
                 )
                 website_id = cursor.lastrowid
         except sqlite3.IntegrityError as exc:
@@ -88,7 +89,7 @@ class WebsiteService:
             "id": website_id,
             "url": normalized_url,
             "name": display_name,
-            "check_interval": check_interval,
+            "check_interval": min_interval,
             "is_active": True,
             "created_at": now_iso,
             "updated_at": now_iso,
@@ -151,7 +152,7 @@ class WebsiteService:
             params.append(name.strip())
         if check_interval is not None:
             updates.append("check_interval = ?")
-            params.append(check_interval)
+            params.append(max(60, check_interval))
         if is_active is not None:
             updates.append("is_active = ?")
             params.append(1 if is_active else 0)

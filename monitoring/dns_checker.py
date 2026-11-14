@@ -211,3 +211,4 @@ async def check_dns(
             error_type="DNSResolutionError",
             error_message=f"DNS lookup error for '{hostname}': {exc}",
         )
+

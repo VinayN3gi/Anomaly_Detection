@@ -155,3 +155,4 @@ class MonitoringResult(Base):
             "dns_time_ms": self.dns_time_ms,
             "ssl_days_remaining": self.ssl_days_remaining,
         }
+
