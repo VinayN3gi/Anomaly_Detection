@@ -7,9 +7,12 @@ Verifies:
 4. Project metadata matches expected values.
 """
 
+from __future__ import annotations
+
 import importlib
 from pathlib import Path
 import pytest
+
 import config
 
 
@@ -23,9 +26,11 @@ class TestProjectDirectories:
             config.RAW_DATA_DIR,
             config.PROCESSED_DATA_DIR,
             config.NOTEBOOKS_DIR,
-            config.SRC_DIR,
+            config.MONITORING_DIR,
+            config.SERVICES_DIR,
+            config.DATABASE_DIR,
+            config.SCHEDULER_DIR,
             config.API_DIR,
-            config.DASHBOARD_DIR,
             config.MODELS_DIR,
             config.TESTS_DIR,
         ],
@@ -42,17 +47,14 @@ class TestDependencyImports:
     @pytest.mark.parametrize(
         "module_name",
         [
+            "fastapi",
+            "uvicorn",
+            "httpx",
+            "pydantic",
+            "sqlite3",
             "pandas",
             "numpy",
             "sklearn",
-            "scipy",
-            "joblib",
-            "matplotlib",
-            "seaborn",
-            "flask",
-            "flask_cors",
-            "boto3",
-            "dotenv",
             "pytest",
             "black",
             "flake8",
@@ -69,7 +71,7 @@ class TestConfiguration:
 
     def test_project_name(self) -> None:
         """Verify configured project name."""
-        expected_name = "AIOps - Cloud Infrastructure Anomaly Detection"
+        expected_name = "AIOps - Universal Website Monitoring & Anomaly Detection"
         assert config.PROJECT_NAME == expected_name
 
     def test_project_root_validity(self) -> None:

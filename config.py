@@ -1,17 +1,18 @@
-"""Centralized Configuration Module for AIOps Anomaly Detection.
+"""Centralized Configuration Module for Universal Website Monitoring.
 
 Uses pathlib for cross-platform path handling, resolving all paths relative
 to the project root directory.
 """
 
+import os
 from pathlib import Path
 
 # Project metadata
-PROJECT_NAME: str = "AIOps - Cloud Infrastructure Anomaly Detection"
-PROJECT_VERSION: str = "0.2.0"
+PROJECT_NAME: str = "AIOps - Universal Website Monitoring & Anomaly Detection"
+PROJECT_VERSION: str = "0.3.0"
 PROJECT_DESCRIPTION: str = (
-    "AIOps solution for cloud infrastructure anomaly detection using "
-    "Machine Learning."
+    "Universal website monitoring platform with performance telemetry, "
+    "uptime tracking, and future anomaly detection."
 )
 
 # Project root directory resolved relative to this file
@@ -22,42 +23,53 @@ DATA_DIR: Path = PROJECT_ROOT / "data"
 RAW_DATA_DIR: Path = DATA_DIR / "raw"
 PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"
 VISUALIZATIONS_DIR: Path = DATA_DIR / "visualizations"
-
 NOTEBOOKS_DIR: Path = PROJECT_ROOT / "notebooks"
-SRC_DIR: Path = PROJECT_ROOT / "src"
-SCRIPTS_DIR: Path = PROJECT_ROOT / "scripts"
-API_DIR: Path = PROJECT_ROOT / "api"
-DASHBOARD_DIR: Path = PROJECT_ROOT / "dashboard"
-MODELS_DIR: Path = PROJECT_ROOT / "models"
 LOGS_DIR: Path = PROJECT_ROOT / "logs"
+MODELS_DIR: Path = PROJECT_ROOT / "models"
 TESTS_DIR: Path = PROJECT_ROOT / "tests"
 
-# Dataset artifact file paths
-RAW_DATA_FILE: Path = RAW_DATA_DIR / "infrastructure_metrics.csv"
-SAMPLE_DATA_FILE: Path = RAW_DATA_DIR / "infrastructure_metrics_sample.csv"
-DATASET_SUMMARY_FILE: Path = RAW_DATA_DIR / "dataset_summary.txt"
+# Platform architecture directories
+MONITORING_DIR: Path = PROJECT_ROOT / "monitoring"
+SERVICES_DIR: Path = PROJECT_ROOT / "services"
+DATABASE_DIR: Path = PROJECT_ROOT / "database"
+SCHEDULER_DIR: Path = PROJECT_ROOT / "scheduler"
+API_DIR: Path = PROJECT_ROOT / "api"
+SCRIPTS_DIR: Path = PROJECT_ROOT / "scripts"
+SRC_DIR: Path = PROJECT_ROOT / "src"
 
-# Default dataset generation parameters
-DEFAULT_NUM_RECORDS: int = 10000
-DEFAULT_RANDOM_SEED: int = 42
-DEFAULT_START_TIME: str = "2026-03-01 00:00:00"
-DEFAULT_INSTANCE_ID: str = "i-0f8b3c4a2d1e98765"
-DEFAULT_ANOMALY_PERCENTAGE: float = 0.05
+# Database path (SQLite)
+DEFAULT_DB_PATH: Path = DATA_DIR / "monitoring.db"
+DB_PATH: Path = Path(os.getenv("DATABASE_PATH", str(DEFAULT_DB_PATH)))
 
-# List of essential directories for validation and setup
+# Monitoring engine defaults
+DEFAULT_CHECK_INTERVAL: int = int(os.getenv("DEFAULT_CHECK_INTERVAL", "60"))
+REQUEST_TIMEOUT: float = float(os.getenv("REQUEST_TIMEOUT", "10.0"))
+CONNECT_TIMEOUT: float = float(os.getenv("CONNECT_TIMEOUT", "5.0"))
+MAX_REDIRECTS: int = int(os.getenv("MAX_REDIRECTS", "5"))
+USER_AGENT: str = "AIOps-Website-Monitor/1.0 (+https://aiops-monitor.local)"
+
+# Network and SSRF security restrictions
+ALLOWED_SCHEMES: tuple[str, ...] = ("http", "https")
+ALLOWED_PORTS: tuple[int, ...] = (80, 443, 8080, 8443)
+
+# API Server defaults
+API_HOST: str = os.getenv("API_HOST", "127.0.0.1")
+API_PORT: int = int(os.getenv("API_PORT", "8000"))
+
+# Essential project directories for validation and setup
 PROJECT_DIRECTORIES: tuple[Path, ...] = (
     DATA_DIR,
     RAW_DATA_DIR,
     PROCESSED_DATA_DIR,
-    VISUALIZATIONS_DIR,
     NOTEBOOKS_DIR,
-    SRC_DIR,
-    SCRIPTS_DIR,
-    API_DIR,
-    DASHBOARD_DIR,
-    MODELS_DIR,
     LOGS_DIR,
+    MODELS_DIR,
     TESTS_DIR,
+    MONITORING_DIR,
+    SERVICES_DIR,
+    DATABASE_DIR,
+    SCHEDULER_DIR,
+    API_DIR,
 )
 
 
