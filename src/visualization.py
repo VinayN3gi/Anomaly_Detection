@@ -6,8 +6,16 @@ metric distributions, correlation dynamics, and anomaly characterizations.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
+import tempfile
+
+# Set non-interactive writable cache directory for Matplotlib
+if "MPLCONFIGDIR" not in os.environ:
+    os.environ["MPLCONFIGDIR"] = tempfile.gettempdir()
+
 import matplotlib
+
 matplotlib.use("Agg")  # Non-interactive headless backend
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -180,7 +188,9 @@ def plot_anomaly_type_distribution(
             fontweight="bold",
         )
 
-    ax.set_title("Distribution of Infrastructure Anomaly Types (500 Total Anomalies)", pad=12)
+    ax.set_title(
+        "Distribution of Infrastructure Anomaly Types (500 Total Anomalies)", pad=12
+    )
     ax.set_xlabel("Number of Anomalous Records")
     ax.set_ylabel("Failure Scenario")
     ax.grid(axis="x", linestyle="--", alpha=0.6)
@@ -352,4 +362,3 @@ def generate_all_visualizations(
     )
 
     return generated
-

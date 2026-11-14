@@ -10,10 +10,7 @@ from pathlib import Path
 from typing import Any
 import pandas as pd
 
-from src.data_generator import (
-    generate_infrastructure_dataset,
-    save_dataset,
-)
+from src.data_generator import generate_infrastructure_dataset
 from src.data_validation import validate_dataset, ValidationReport
 
 

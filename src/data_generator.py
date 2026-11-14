@@ -7,7 +7,6 @@ normal operating conditions and various infrastructure anomaly scenarios.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 import numpy as np
 import pandas as pd
 
@@ -112,16 +111,12 @@ def generate_normal_metrics(
     # 3. Network In (Mbps, incoming requests payload)
     net_in_base = 12.0 + 0.075 * request_count
     net_in_noise = rng.normal(0.0, 2.5, size=n)
-    network_in = np.clip(
-        np.round(net_in_base + net_in_noise, 2), 4.0, 85.0
-    )
+    network_in = np.clip(np.round(net_in_base + net_in_noise, 2), 4.0, 85.0)
 
     # 4. Network Out (Mbps, outgoing response payload, typically larger)
     net_out_base = 22.0 + 0.17 * request_count + 0.35 * network_in
     net_out_noise = rng.normal(0.0, 4.0, size=n)
-    network_out = np.clip(
-        np.round(net_out_base + net_out_noise, 2), 12.0, 175.0
-    )
+    network_out = np.clip(np.round(net_out_base + net_out_noise, 2), 12.0, 175.0)
 
     # 5. CPU Usage (percentage, directly driven by request processing)
     # Base idle CPU 18% + load factor + random fluctuation
@@ -136,9 +131,7 @@ def generate_normal_metrics(
     mem_series[0] = 46.0
     for i in range(1, n):
         # AR(1) process with mean reversion to 48.0%
-        mem_series[i] = (
-            0.995 * mem_series[i - 1] + 0.005 * 48.0 + mem_shocks[i]
-        )
+        mem_series[i] = 0.995 * mem_series[i - 1] + 0.005 * 48.0 + mem_shocks[i]
     memory_usage = np.clip(np.round(mem_series, 2), 32.0, 68.0)
 
     # 7. Disk Usage (percentage, slowly increasing log and data accumulation)
@@ -150,9 +143,7 @@ def generate_normal_metrics(
     # 8. Response Time (milliseconds, correlates with CPU and request volume)
     resp_base = 24.0 + 0.32 * cpu_usage + 0.025 * request_count
     resp_noise = rng.exponential(scale=3.5, size=n)
-    response_time = np.clip(
-        np.round(resp_base + resp_noise, 2), 18.0, 95.0
-    )
+    response_time = np.clip(np.round(resp_base + resp_noise, 2), 18.0, 95.0)
 
     df = pd.DataFrame(
         {

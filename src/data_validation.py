@@ -118,9 +118,7 @@ def validate_dataset(
     if not missing_cols:
         passed_checks += 1
     else:
-        errors.append(
-            f"Check 2 Failed: Missing required columns: {missing_cols}"
-        )
+        errors.append(f"Check 2 Failed: Missing required columns: {missing_cols}")
 
     # Check 3: Duplicate timestamps
     if "timestamp" in df.columns:
@@ -128,9 +126,7 @@ def validate_dataset(
         if dup_count == 0:
             passed_checks += 1
         else:
-            errors.append(
-                f"Check 3 Failed: Found {dup_count} duplicate timestamps."
-            )
+            errors.append(f"Check 3 Failed: Found {dup_count} duplicate timestamps.")
     else:
         errors.append("Check 3 Failed: Cannot verify duplicates (timestamp missing).")
 
@@ -151,9 +147,7 @@ def validate_dataset(
     if null_counts == 0:
         passed_checks += 1
     else:
-        errors.append(
-            f"Check 5 Failed: Found {null_counts} missing/null values."
-        )
+        errors.append(f"Check 5 Failed: Found {null_counts} missing/null values.")
 
     # Check 6: CPU utilization in [0, 100]
     if "cpu_usage" in df.columns:
@@ -226,9 +220,7 @@ def validate_dataset(
         if rt_min > 0.0:
             passed_checks += 1
         else:
-            errors.append(
-                f"Check 11 Failed: Non-positive response time: min={rt_min}."
-            )
+            errors.append(f"Check 11 Failed: Non-positive response time: min={rt_min}.")
     else:
         errors.append("Check 11 Failed: response_time column missing.")
 
@@ -311,15 +303,21 @@ def validate_dataset(
 
     metrics_summary: dict[str, Any] = {
         "Total Records": actual_records,
-        "Normal Records": int((df["anomaly_label"] == 0).sum())
-        if "anomaly_label" in df.columns
-        else 0,
-        "Anomalous Records": int((df["anomaly_label"] == 1).sum())
-        if "anomaly_label" in df.columns
-        else 0,
-        "Anomaly Percentage": f"{(df['anomaly_label'] == 1).mean() * 100:.2f}%"
-        if "anomaly_label" in df.columns and actual_records > 0
-        else "N/A",
+        "Normal Records": (
+            int((df["anomaly_label"] == 0).sum())
+            if "anomaly_label" in df.columns
+            else 0
+        ),
+        "Anomalous Records": (
+            int((df["anomaly_label"] == 1).sum())
+            if "anomaly_label" in df.columns
+            else 0
+        ),
+        "Anomaly Percentage": (
+            f"{(df['anomaly_label'] == 1).mean() * 100:.2f}%"
+            if "anomaly_label" in df.columns and actual_records > 0
+            else "N/A"
+        ),
     }
 
     return ValidationReport(
@@ -331,4 +329,3 @@ def validate_dataset(
         warnings=warnings,
         metrics_summary=metrics_summary,
     )
-
