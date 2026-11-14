@@ -44,6 +44,9 @@ models/*
 # Data Files (keep directory structure via .gitkeep)
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/infrastructure_metrics.csv
+!data/raw/infrastructure_metrics_sample.csv
+!data/raw/dataset_summary.txt
 data/processed/*
 !data/processed/.gitkeep
 

@@ -71,7 +71,7 @@ def main() -> int:
     config.ensure_directories_exist()
 
     # 2. Generate Dataset
-    print("[1/5] Generating normal metrics and injecting multi-scenario anomalies...")
+    print("[1/5] Generating normal metrics and injecting anomalies...")
     gen_start = time.time()
     df = generate_infrastructure_dataset(
         num_records=args.records,
@@ -80,7 +80,10 @@ def main() -> int:
         instance_id=config.DEFAULT_INSTANCE_ID,
     )
     gen_duration = time.time() - gen_start
-    print(f"      -> Generated {len(df):,} records across 11 features in {gen_duration:.2f}s.")
+    print(
+        f"      -> Generated {len(df):,} records across 11 features "
+        f"in {gen_duration:.2f}s."
+    )
 
     # 3. Validate Dataset
     print("[2/5] Running comprehensive 16-point dataset validation checks...")
@@ -91,10 +94,16 @@ def main() -> int:
     )
     if not report.is_valid:
         print("\n" + report.summary_text())
-        print("ERROR: Dataset validation failed! Aborting save process.", file=sys.stderr)
+        print(
+            "ERROR: Dataset validation failed! Aborting save process.",
+            file=sys.stderr,
+        )
         return 1
 
-    print(f"      -> Validation PASSED ({report.passed_checks}/{report.total_checks} checks).")
+    print(
+        f"      -> Validation PASSED ({report.passed_checks}/"
+        f"{report.total_checks} checks)."
+    )
     print(
         f"      -> Normal: {report.metrics_summary['Normal Records']:,} | "
         f"Anomalous: {report.metrics_summary['Anomalous Records']:,} "
@@ -110,20 +119,24 @@ def main() -> int:
         summary_path=config.DATASET_SUMMARY_FILE,
         sample_size=100,
     )
-    print(f"      -> Saved full CSV   : {main_p} ({main_p.stat().st_size / (1024*1024):.2f} MB)")
+    csv_mb = main_p.stat().st_size / (1024 * 1024)
+    print(f"      -> Saved full CSV   : {main_p} ({csv_mb:.2f} MB)")
     print(f"      -> Saved sample CSV : {samp_p}")
     print(f"      -> Saved summary    : {sum_p}")
 
     # 5. Generate Exploratory Visualizations
     if not args.skip_viz:
-        print("[4/5] Rendering 10 high-resolution exploratory visualization charts...")
+        print("[4/5] Rendering 10 high-resolution visualization charts...")
         viz_start = time.time()
         viz_files = generate_all_visualizations(
             df=df,
             visualizations_dir=config.VISUALIZATIONS_DIR,
         )
         viz_duration = time.time() - viz_start
-        print(f"      -> Successfully created {len(viz_files)} PNG figures in {viz_duration:.2f}s:")
+        print(
+            f"      -> Successfully created {len(viz_files)} PNG figures "
+            f"in {viz_duration:.2f}s:"
+        )
         for name, path in viz_files.items():
             print(f"         * {path.name}")
     else:
@@ -147,4 +160,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
