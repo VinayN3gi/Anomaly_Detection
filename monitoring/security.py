@@ -23,12 +23,14 @@ class SecurityValidationError(ValueError):
 # Specific cloud metadata IP addresses to strictly prohibit
 BLOCKED_METADATA_IPS: set[str] = {
     "169.254.169.254",  # AWS EC2 / Azure / GCP IMDSv1/v2
-    "169.254.170.2",    # AWS ECS task metadata
-    "fd00:ec2::254",    # AWS IPv6 IMDS
+    "169.254.170.2",  # AWS ECS task metadata
+    "fd00:ec2::254",  # AWS IPv6 IMDS
 }
 
 
-def is_ip_private_or_reserved(ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+def is_ip_private_or_reserved(
+    ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address,
+) -> bool:
     """Determine whether an IP address is private, loopback, or reserved.
 
     Args:
@@ -71,7 +73,7 @@ def resolve_and_validate_hostname(hostname: str) -> list[str]:
         List of verified public IP address strings.
 
     Raises:
-        SecurityValidationError: If hostname resolves to an internal/private/reserved IP.
+        SecurityValidationError: If hostname resolves to private/reserved IP.
     """
     cleaned_host = hostname.strip().lower()
 
@@ -84,14 +86,15 @@ def resolve_and_validate_hostname(hostname: str) -> list[str]:
     # If already an IP address, validate directly
     try:
         ip_obj = ipaddress.ip_address(cleaned_host)
+    except ValueError:
+        ip_obj = None
+
+    if ip_obj is not None:
         if is_ip_private_or_reserved(ip_obj):
             raise SecurityValidationError(
                 f"IP address '{cleaned_host}' is private, loopback, or reserved."
             )
         return [str(ip_obj)]
-    except ValueError:
-        # Not a raw IP literal; proceed with DNS resolution
-        pass
 
     # Resolve all IPv4 and IPv6 addresses for the hostname
     try:
@@ -157,7 +160,23 @@ def validate_url_security(url: str) -> tuple[str, str, int]:
         raise SecurityValidationError("URL must be a non-empty string.")
 
     cleaned_url = url.strip()
-    # Add default scheme if missing
+
+    # --- Scheme check BEFORE prepending a default scheme ---
+    # Extract the scheme from the raw user input if '://' is present.
+    if "://" in cleaned_url:
+        raw_scheme = cleaned_url.split("://", 1)[0].lower()
+        if raw_scheme not in config.ALLOWED_SCHEMES:
+            raise SecurityValidationError(
+                f"Scheme '{raw_scheme}' is not allowed. "
+                "Only HTTP and HTTPS are permitted."
+            )
+    elif cleaned_url.startswith("javascript:"):
+        raise SecurityValidationError(
+            "Scheme 'javascript' is not allowed. "
+            "Only HTTP and HTTPS are permitted."
+        )
+
+    # Add default HTTPS scheme if missing (safe now that illegal schemes caught)
     if not cleaned_url.startswith(("http://", "https://")):
         cleaned_url = f"https://{cleaned_url}"
 
@@ -209,4 +228,3 @@ def validate_url_security(url: str) -> tuple[str, str, int]:
         normalized += f"?{parsed.query}"
 
     return normalized, primary_ip, port
-

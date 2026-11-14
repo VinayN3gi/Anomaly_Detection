@@ -1,45 +1,49 @@
-"""Centralized Configuration Module for Universal Website Monitoring.
+"""Centralized Settings Module for Website Monitoring & Anomaly Detection.
 
 Uses pathlib for cross-platform path handling, resolving all paths relative
-to the project root directory.
+to the project root directory. Supports environment-based overrides via .env.
 """
+
+from __future__ import annotations
 
 import os
 from pathlib import Path
 
 # Project metadata
-PROJECT_NAME: str = "AIOps - Universal Website Monitoring & Anomaly Detection"
-PROJECT_VERSION: str = "0.3.0"
+PROJECT_NAME: str = "AIOps - Website Monitoring & Anomaly Detection Platform"
+PROJECT_VERSION: str = "1.0.0"
 PROJECT_DESCRIPTION: str = (
-    "Universal website monitoring platform with performance telemetry, "
-    "uptime tracking, and future anomaly detection."
+    "Production-grade universal website monitoring and anomaly detection platform "
+    "with real-time HTTP/DNS/SSL probes, background scheduling, structured telemetry, "
+    "and time-series anomaly detection."
 )
 
 # Project root directory resolved relative to this file
-PROJECT_ROOT: Path = Path(__file__).resolve().parent
+PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent
 
 # Core project directories
 DATA_DIR: Path = PROJECT_ROOT / "data"
 RAW_DATA_DIR: Path = DATA_DIR / "raw"
 PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"
-VISUALIZATIONS_DIR: Path = DATA_DIR / "visualizations"
 NOTEBOOKS_DIR: Path = PROJECT_ROOT / "notebooks"
 LOGS_DIR: Path = PROJECT_ROOT / "logs"
 MODELS_DIR: Path = PROJECT_ROOT / "models"
 TESTS_DIR: Path = PROJECT_ROOT / "tests"
 
-# Platform architecture directories
+# Platform modular architecture directories
+CONFIG_DIR: Path = PROJECT_ROOT / "config"
 MONITORING_DIR: Path = PROJECT_ROOT / "monitoring"
 SERVICES_DIR: Path = PROJECT_ROOT / "services"
 DATABASE_DIR: Path = PROJECT_ROOT / "database"
 SCHEDULER_DIR: Path = PROJECT_ROOT / "scheduler"
 API_DIR: Path = PROJECT_ROOT / "api"
-SCRIPTS_DIR: Path = PROJECT_ROOT / "scripts"
-SRC_DIR: Path = PROJECT_ROOT / "src"
+ANOMALY_DETECTION_DIR: Path = PROJECT_ROOT / "anomaly_detection"
+ALERTING_DIR: Path = PROJECT_ROOT / "alerting"
 
-# Database path (SQLite)
+# Database path (SQLite default, PostgreSQL/TimescaleDB supported)
 DEFAULT_DB_PATH: Path = DATA_DIR / "monitoring.db"
 DB_PATH: Path = Path(os.getenv("DATABASE_PATH", str(DEFAULT_DB_PATH)))
+DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
 
 # Monitoring engine defaults
 DEFAULT_CHECK_INTERVAL: int = int(os.getenv("DEFAULT_CHECK_INTERVAL", "60"))
@@ -56,6 +60,10 @@ ALLOWED_PORTS: tuple[int, ...] = (80, 443, 8080, 8443)
 API_HOST: str = os.getenv("API_HOST", "127.0.0.1")
 API_PORT: int = int(os.getenv("API_PORT", "8000"))
 
+# Logging defaults
+LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+LOG_FORMAT: str = os.getenv("LOG_FORMAT", "console")
+
 # Essential project directories for validation and setup
 PROJECT_DIRECTORIES: tuple[Path, ...] = (
     DATA_DIR,
@@ -65,11 +73,14 @@ PROJECT_DIRECTORIES: tuple[Path, ...] = (
     LOGS_DIR,
     MODELS_DIR,
     TESTS_DIR,
+    CONFIG_DIR,
     MONITORING_DIR,
     SERVICES_DIR,
     DATABASE_DIR,
     SCHEDULER_DIR,
     API_DIR,
+    ANOMALY_DETECTION_DIR,
+    ALERTING_DIR,
 )
 
 
@@ -77,3 +88,4 @@ def ensure_directories_exist() -> None:
     """Create essential project directories if they do not exist."""
     for directory in PROJECT_DIRECTORIES:
         directory.mkdir(parents=True, exist_ok=True)
+

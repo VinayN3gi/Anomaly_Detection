@@ -15,4 +15,3 @@ __all__ = [
     "init_db",
     "save_check_result",
 ]
-

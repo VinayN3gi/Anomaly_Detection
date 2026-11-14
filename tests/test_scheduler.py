@@ -1,6 +1,5 @@
 """Unit tests for the periodic background monitoring scheduler."""
 
-import asyncio
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
@@ -50,7 +49,7 @@ class TestMonitoringScheduler:
                 "INSERT INTO websites (url, check_interval, is_active, created_at, updated_at) "
                 "VALUES ('https://inactive-site.com', 60, 0, '2026-01-01', '2026-01-01');"
             )
-            id3 = cur3.lastrowid
+            assert cur3.lastrowid is not None
 
         # Insert historical checks
         dummy_res1 = WebsiteCheckResult(
@@ -94,7 +93,9 @@ class TestMonitoringScheduler:
         scheduler = MonitoringScheduler(db_path=sched_db, poll_interval=1.0)
 
         # Mock probe function so it doesn't make real web requests
-        with patch("scheduler.monitor_scheduler.check_website_async", new_callable=AsyncMock) as mock_probe:
+        with patch(
+            "scheduler.monitor_scheduler.check_website_async", new_callable=AsyncMock
+        ) as mock_probe:
             mock_probe.return_value = dummy_res1
 
             dispatched_ids = await scheduler.run_due_checks()
@@ -102,4 +103,3 @@ class TestMonitoringScheduler:
         # Only site 1 should be dispatched
         assert dispatched_ids == [id1]
         assert mock_probe.call_count == 1
-

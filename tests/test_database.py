@@ -104,7 +104,9 @@ class TestDatabaseLayer:
             site_id = cur.lastrowid
 
         # Insert 3 UP checks (50ms, 70ms, 90ms) and 1 DOWN check (150ms)
-        for i, (up, rt) in enumerate([(True, 50.0), (True, 70.0), (True, 90.0), (False, 150.0)]):
+        for i, (up, rt) in enumerate(
+            [(True, 50.0), (True, 70.0), (True, 90.0), (False, 150.0)]
+        ):
             res = WebsiteCheckResult(
                 url="https://stats.com",
                 timestamp=f"2026-03-01T12:0{i}:00Z",
@@ -169,4 +171,3 @@ class TestDatabaseLayer:
 
         # Verify checks were cascaded
         assert len(get_recent_checks(site_id, limit=5, db_path=temp_db)) == 0
-

@@ -14,7 +14,6 @@ from typing import Generator
 import config
 from monitoring.engine import WebsiteCheckResult
 
-
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
 
@@ -74,7 +73,9 @@ def init_db(db_path: Path | str | None = None) -> Path:
 
 
 @contextmanager
-def get_db(db_path: Path | str | None = None) -> Generator[sqlite3.Connection, None, None]:
+def get_db(
+    db_path: Path | str | None = None,
+) -> Generator[sqlite3.Connection, None, None]:
     """Context manager yielding SQLite connection configured with row factory."""
     target_path = get_db_path(db_path)
     conn = sqlite3.connect(target_path, timeout=10.0)
@@ -209,4 +210,3 @@ def get_aggregate_stats(
             "min_response_time_ms": round(row["min_response_time_ms"] or 0.0, 2),
             "max_response_time_ms": round(row["max_response_time_ms"] or 0.0, 2),
         }
-

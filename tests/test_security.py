@@ -4,10 +4,8 @@ import pytest
 
 from monitoring.security import (
     SecurityValidationError,
-    is_ip_private_or_reserved,
     validate_url_security,
 )
-import ipaddress
 
 
 class TestSecurityValidation:
@@ -26,11 +24,15 @@ class TestSecurityValidation:
         assert ip == "93.184.216.34"
         assert port == 443
 
-        norm_http, _, port_http = validate_url_security("http://example.com/api/status?v=1")
+        norm_http, _, port_http = validate_url_security(
+            "http://example.com/api/status?v=1"
+        )
         assert norm_http == "http://example.com/api/status?v=1"
         assert port_http == 80
 
-    def test_missing_scheme_defaults_to_https(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_missing_scheme_defaults_to_https(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Verify scheme-less inputs default safely to HTTPS."""
         monkeypatch.setattr(
             "monitoring.security.resolve_and_validate_hostname",
@@ -99,15 +101,17 @@ class TestSecurityValidation:
         with pytest.raises(SecurityValidationError):
             validate_url_security(metadata_url)
 
-    def test_dns_resolving_to_private_ip_blocked(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_dns_resolving_to_private_ip_blocked(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Verify DNS rebinding / hostnames resolving to private IPs are caught."""
         monkeypatch.setattr(
             "socket.getaddrinfo",
-            lambda host, port, family=0, type=0: [
-                (2, 1, 6, "", ("10.0.0.5", 80))
-            ],
+            lambda host, port, family=0, type=0: [(2, 1, 6, "", ("10.0.0.5", 80))],
         )
-        with pytest.raises(SecurityValidationError, match="resolves to private/reserved IP"):
+        with pytest.raises(
+            SecurityValidationError, match="resolves to private/reserved IP"
+        ):
             validate_url_security("http://evil-internal-rebinding.com")
 
     @pytest.mark.parametrize("disallowed_port", [21, 22, 25, 3306, 5432, 6379, 27017])
@@ -119,7 +123,9 @@ class TestSecurityValidation:
             "monitoring.security.resolve_and_validate_hostname",
             lambda host: ["93.184.216.34"],
         )
-        with pytest.raises(SecurityValidationError, match="not in the allowed monitoring ports"):
+        with pytest.raises(
+            SecurityValidationError, match="not in the allowed monitoring ports"
+        ):
             validate_url_security(f"https://example.com:{disallowed_port}/")
 
     def test_embedded_credentials_blocked(self) -> None:
@@ -133,4 +139,3 @@ class TestSecurityValidation:
             validate_url_security("")
         with pytest.raises(SecurityValidationError):
             validate_url_security("   ")
-

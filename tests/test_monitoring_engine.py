@@ -1,6 +1,5 @@
 """Unit tests for the HTTP/DNS/SSL monitoring probe engine."""
 
-import ssl
 from unittest.mock import MagicMock, patch
 import httpx
 import pytest
@@ -43,8 +42,12 @@ class TestMonitoringEngine:
             )
         )
 
-        with patch("httpx.AsyncClient", return_value=httpx.AsyncClient(transport=transport)):
-            result: WebsiteCheckResult = await check_website_async("https://example.com")
+        with patch(
+            "httpx.AsyncClient", return_value=httpx.AsyncClient(transport=transport)
+        ):
+            result: WebsiteCheckResult = await check_website_async(
+                "https://example.com"
+            )
 
         assert result.is_up is True
         assert result.status == "UP"
@@ -68,7 +71,9 @@ class TestMonitoringEngine:
             lambda request: httpx.Response(404, text="Not Found")
         )
 
-        with patch("httpx.AsyncClient", return_value=httpx.AsyncClient(transport=transport)):
+        with patch(
+            "httpx.AsyncClient", return_value=httpx.AsyncClient(transport=transport)
+        ):
             result = await check_website_async("https://example.com/missing")
 
         assert result.is_up is True
@@ -88,7 +93,9 @@ class TestMonitoringEngine:
             lambda request: httpx.Response(500, text="Internal Server Error")
         )
 
-        with patch("httpx.AsyncClient", return_value=httpx.AsyncClient(transport=transport)):
+        with patch(
+            "httpx.AsyncClient", return_value=httpx.AsyncClient(transport=transport)
+        ):
             result = await check_website_async("https://example.com/crash")
 
         assert result.is_up is False
@@ -110,7 +117,9 @@ class TestMonitoringEngine:
 
         transport = httpx.MockTransport(raise_timeout)
 
-        with patch("httpx.AsyncClient", return_value=httpx.AsyncClient(transport=transport)):
+        with patch(
+            "httpx.AsyncClient", return_value=httpx.AsyncClient(transport=transport)
+        ):
             result = await check_website_async("https://example.com")
 
         assert result.is_up is False
@@ -150,7 +159,9 @@ class TestSSLInspection:
         monkeypatch.setattr("ssl.create_default_context", lambda: mock_context)
         monkeypatch.setattr(
             "socket.create_connection",
-            lambda addr, timeout: MagicMock(__enter__=lambda s: MagicMock(), __exit__=lambda *a: None),
+            lambda addr, timeout: MagicMock(
+                __enter__=lambda s: MagicMock(), __exit__=lambda *a: None
+            ),
         )
 
         is_valid, expiry_iso, days_left, err = inspect_ssl_certificate("example.com")
@@ -159,7 +170,9 @@ class TestSSLInspection:
         assert "2030" in expiry_iso
         assert err is None
 
-    def test_expired_ssl_certificate_mock(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_expired_ssl_certificate_mock(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Verify expired certificate flags is_valid=False with negative days."""
         fake_cert = {"notAfter": "Jan 01 00:00:00 2020 GMT"}
 
@@ -172,10 +185,13 @@ class TestSSLInspection:
         monkeypatch.setattr("ssl.create_default_context", lambda: mock_context)
         monkeypatch.setattr(
             "socket.create_connection",
-            lambda addr, timeout: MagicMock(__enter__=lambda s: MagicMock(), __exit__=lambda *a: None),
+            lambda addr, timeout: MagicMock(
+                __enter__=lambda s: MagicMock(), __exit__=lambda *a: None
+            ),
         )
 
-        is_valid, expiry_iso, days_left, err = inspect_ssl_certificate("expired.example.com")
+        is_valid, expiry_iso, days_left, err = inspect_ssl_certificate(
+            "expired.example.com"
+        )
         assert is_valid is False
         assert days_left < 0
-

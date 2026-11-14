@@ -26,13 +26,17 @@ class TestProjectDirectories:
             config.RAW_DATA_DIR,
             config.PROCESSED_DATA_DIR,
             config.NOTEBOOKS_DIR,
+            config.LOGS_DIR,
+            config.MODELS_DIR,
+            config.TESTS_DIR,
+            config.CONFIG_DIR,
             config.MONITORING_DIR,
             config.SERVICES_DIR,
             config.DATABASE_DIR,
             config.SCHEDULER_DIR,
             config.API_DIR,
-            config.MODELS_DIR,
-            config.TESTS_DIR,
+            config.ANOMALY_DETECTION_DIR,
+            config.ALERTING_DIR,
         ],
     )
     def test_directory_exists(self, dir_path: Path) -> None:
@@ -58,6 +62,13 @@ class TestDependencyImports:
             "pytest",
             "black",
             "flake8",
+            "apscheduler",
+            "cryptography",
+            "dns",
+            "sqlalchemy",
+            "statsmodels",
+            "ruptures",
+            "mlflow",
         ],
     )
     def test_module_importable(self, module_name: str) -> None:
@@ -71,15 +82,17 @@ class TestConfiguration:
 
     def test_project_name(self) -> None:
         """Verify configured project name."""
-        expected_name = "AIOps - Universal Website Monitoring & Anomaly Detection"
+        expected_name = "AIOps - Website Monitoring & Anomaly Detection Platform"
         assert config.PROJECT_NAME == expected_name
 
     def test_project_root_validity(self) -> None:
         """Verify PROJECT_ROOT exists and contains essential marker files."""
         assert config.PROJECT_ROOT.exists()
-        assert (config.PROJECT_ROOT / "config.py").is_file()
+        assert (config.PROJECT_ROOT / "config" / "settings.py").is_file()
         assert (config.PROJECT_ROOT / "requirements.txt").is_file()
         assert (config.PROJECT_ROOT / "README.md").is_file()
+        assert (config.PROJECT_ROOT / "Dockerfile").is_file()
+        assert (config.PROJECT_ROOT / "docker-compose.yml").is_file()
 
     def test_paths_are_subpaths_of_root(self) -> None:
         """Ensure configured directories reside under the project root."""

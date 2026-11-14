@@ -36,7 +36,9 @@ class MonitoringScheduler:
             return
         self._is_running = True
         self._task = asyncio.create_task(self._run_loop())
-        logger.info("MonitoringScheduler started (polling every %.1fs).", self.poll_interval)
+        logger.info(
+            "MonitoringScheduler started (polling every %.1fs).", self.poll_interval
+        )
 
     async def stop(self) -> None:
         """Stop the background scheduler cleanly."""
@@ -59,7 +61,9 @@ class MonitoringScheduler:
             except asyncio.CancelledError:
                 break
             except Exception as exc:
-                logger.error("Error during scheduled monitoring cycle: %s", exc, exc_info=True)
+                logger.error(
+                    "Error during scheduled monitoring cycle: %s", exc, exc_info=True
+                )
 
             await asyncio.sleep(self.poll_interval)
 
@@ -108,7 +112,11 @@ class MonitoringScheduler:
         try:
             result = await check_website_async(url)
             save_check_result(website_id, result, db_path=self.db_path)
-            logger.debug("Scheduled check completed for site %s (%s): %s", website_id, url, result.status)
+            logger.debug(
+                "Scheduled check completed for site %s (%s): %s",
+                website_id,
+                url,
+                result.status,
+            )
         except Exception as exc:
             logger.error("Scheduled check failed for site %s: %s", website_id, exc)
-

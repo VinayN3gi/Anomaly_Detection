@@ -69,7 +69,8 @@ class WebsiteService:
         try:
             with get_db(self.db_path) as conn:
                 cursor = conn.execute(
-                    query, (normalized_url, display_name, check_interval, now_iso, now_iso)
+                    query,
+                    (normalized_url, display_name, check_interval, now_iso, now_iso),
                 )
                 website_id = cursor.lastrowid
         except sqlite3.IntegrityError as exc:
@@ -125,7 +126,9 @@ class WebsiteService:
             w_dict["is_active"] = bool(w_dict["is_active"])
             recent = get_recent_checks(w_dict["id"], limit=1, db_path=self.db_path)
             w_dict["latest_check"] = recent[0] if recent else None
-            w_dict["stats"] = get_aggregate_stats(w_dict["id"], limit=50, db_path=self.db_path)
+            w_dict["stats"] = get_aggregate_stats(
+                w_dict["id"], limit=50, db_path=self.db_path
+            )
             results.append(w_dict)
 
         return results
@@ -183,4 +186,3 @@ class WebsiteService:
         """Fetch historical monitoring checks for telemetry graphs or analysis."""
         self.get_website(website_id)  # Validate existence
         return get_recent_checks(website_id, limit=limit, db_path=self.db_path)
-

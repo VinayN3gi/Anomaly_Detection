@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from unittest.mock import patch
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -19,10 +18,10 @@ def setup_test_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     service.db_path = db_file
     scheduler.db_path = db_file
 
-    # Mock DNS resolution to public IP
+    # Mock DNS resolution for public domains
     monkeypatch.setattr(
-        "monitoring.security.resolve_and_validate_hostname",
-        lambda host: ["93.184.216.34"],
+        "socket.getaddrinfo",
+        lambda host, port, family=0, type=0: [(2, 1, 6, "", ("93.184.216.34", 80))],
     )
     # Mock probe to return fast synthetic response
     mock_result = WebsiteCheckResult(
@@ -44,7 +43,9 @@ def setup_test_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     )
     monkeypatch.setattr(
         "monitoring.engine.check_website_async",
-        lambda *args, **kwargs: pytest.importorskip("asyncio").sleep(0, result=mock_result),
+        lambda *args, **kwargs: pytest.importorskip("asyncio").sleep(
+            0, result=mock_result
+        ),
     )
 
 
@@ -124,7 +125,9 @@ class TestAPIEndpoints:
 
     def test_trigger_on_demand_check(self, client: TestClient) -> None:
         """Verify manual check trigger endpoint."""
-        reg_resp = client.post("/api/v1/websites", json={"url": "https://check-now.com"})
+        reg_resp = client.post(
+            "/api/v1/websites", json={"url": "https://check-now.com"}
+        )
         site_id = reg_resp.json()["id"]
 
         check_resp = client.post(f"/api/v1/websites/{site_id}/check")
@@ -154,7 +157,9 @@ class TestAPIEndpoints:
 
     def test_delete_website(self, client: TestClient) -> None:
         """Verify website deletion endpoint returns 204."""
-        reg_resp = client.post("/api/v1/websites", json={"url": "https://delete-me.com"})
+        reg_resp = client.post(
+            "/api/v1/websites", json={"url": "https://delete-me.com"}
+        )
         site_id = reg_resp.json()["id"]
 
         del_resp = client.delete(f"/api/v1/websites/{site_id}")
@@ -163,4 +168,3 @@ class TestAPIEndpoints:
         # Confirm deleted
         get_resp = client.get(f"/api/v1/websites/{site_id}")
         assert get_resp.status_code == 404
-

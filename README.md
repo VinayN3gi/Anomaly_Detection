@@ -1,293 +1,267 @@
-# AIOps – Cloud Infrastructure Anomaly Detection
+# AIOps – Website Monitoring & Anomaly Detection Platform
 
-## Project Overview
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
-**AIOps – Cloud Infrastructure Anomaly Detection** is an automated intelligence platform designed to monitor cloud computing environments, detect abnormal behavioral patterns across server telemetry, and notify operations teams before service degradation occurs.
-
-Modern cloud deployments generate massive volumes of metric telemetry across thousands of compute nodes. Traditional rule-based threshold alerting frequently causes alert fatigue or misses subtle, multi-variate deviations. This system leverages unsupervised Machine Learning (**Isolation Forest**) to evaluate multidimensional metric streams—identifying complex anomalies across compute, memory, storage, and networking layers without requiring labeled incident historical data.
-
----
-
-## Objectives
-
-- **Monitor Infrastructure Metrics:** Collect and track time-series metrics from cloud infrastructure (e.g., AWS EC2, CloudWatch).
-- **Detect Unusual CPU Utilization:** Uncover unexpected processor spikes, anomalous idle patterns, or crypto-mining signatures.
-- **Identify Memory Anomalies:** Pinpoint rapid memory leaks and sudden allocation exhaustion.
-- **Monitor Disk Utilization:** Identify abnormal read/write throughput surges and storage saturation.
-- **Detect Abnormal Network Traffic:** Spot traffic anomalies, outbound data exfiltration indicators, or DDoS packet floods.
-- **Generate Infrastructure Alerts:** Trigger actionable alerts categorized by anomaly severity score.
-- **Visualize System Health:** Expose metrics and detected anomalies through a Flask REST API connected to Grafana dashboards.
+An intelligent, production-grade universal website monitoring and anomaly detection platform. Monitors any publicly accessible web service—whether deployed on **Vercel, AWS, Netlify, Render, DigitalOcean, Cloudflare, or custom infrastructure**—capturing fine-grained performance telemetry, tracking uptime, and preparing time-series metrics for machine learning anomaly detection.
 
 ---
 
-## Planned Technologies
+## 1. Project Overview & Objectives
 
-- **Programming Language:** Python 3.10+ (tested with Python 3.12)
-- **Data Engineering:** Pandas, NumPy
-- **Machine Learning:** Scikit-learn (Isolation Forest), SciPy, Joblib
-- **Visualization & Profiling:** Matplotlib, Seaborn, Jupyter Notebook
-- **Cloud Infrastructure & Telemetry:** AWS EC2, AWS CloudWatch, Boto3
-- **API & Dashboarding:** Flask, Flask-CORS, Grafana
-- **Testing & Code Quality:** Pytest, Flake8, Black
+Traditional ping checks only report binary up/down status without revealing subtle performance degradation, DNS latency spikes, or impending SSL certificate expirations. The **AIOps Website Monitoring Platform** solves this by combining asynchronous active probing, anti-SSRF security boundaries, persistent telemetry collection, and background scheduling.
+
+### Key Capabilities
+
+1. **Universal Hosting Support:** Monitor websites on Vercel, Netlify, AWS, Render, DigitalOcean, VPS, or bare-metal servers.
+2. **Deep Telemetry Collection:**
+   - **Uptime Status:** Binary `UP` / `DOWN` determination.
+   - **HTTP Status Code:** Accurate code tracking (`200`, `404`, `500`, `502`, etc.).
+   - **Total Response Time:** End-to-end request latency (ms).
+   - **Time to First Byte (TTFB):** Server processing and initial response time (ms).
+   - **DNS Resolution Time:** Domain lookup latency (ms).
+   - **SSL/TLS Certificate Inspection:** Validity verification and days until expiration.
+   - **Payload Size & Redirects:** Response size (bytes) and redirect hop count.
+   - **Error Categorization:** Detailed root-cause capture (DNS failure, connection timeout, HTTP 5xx).
+3. **Strict Network & Anti-SSRF Security:**
+   - Prohibits private/link-local/loopback IP addresses (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `::1`).
+   - Blocks cloud metadata endpoints (`169.254.169.254`, `169.254.170.2`, `fd00:ec2::254`).
+   - Prevents DNS rebinding by validating all resolved IP addresses before probing.
+   - Enforces allowed schemes (`http`, `https`) and standard web ports (`80`, `443`, `8080`, `8443`).
+4. **Asynchronous Background Scheduling:** Non-blocking periodic checks per configured interval (default 60 seconds).
+5. **Dual Database Architecture:** Lightweight SQLite for local development; PostgreSQL / TimescaleDB ready for production.
 
 ---
 
-## Project Architecture
-
-The diagram below illustrates the planned end-to-end architecture:
+## 2. Architecture
 
 ```mermaid
 flowchart TD
-    A[AWS EC2 / Synthetic Metrics] --> B[CloudWatch / Data Source]
-    B --> C[Python Data Collection]
-    C --> D[Data Preprocessing]
-    D --> E[Isolation Forest]
-    E --> F[Anomaly Detection]
-    F --> G[Alert System]
-    G --> H[Flask API]
-    H --> I[Grafana Dashboard]
+    User([User / Dashboard Client]) -->|Register / Query| API[FastAPI REST API Layer]
+    API -->|Validate Security| Sec[Anti-SSRF Validation Engine]
+    API -->|Persist Metadata| DB[(Database Layer - SQLite / TimescaleDB)]
+    
+    subgraph Engine [Monitoring & Telemetry Engine]
+        Sched[Background Scheduler] -->|Trigger Due Checks| Probe[Async Probe Worker]
+        Probe -->|DNS Latency| DNS[DNS Resolver]
+        Probe -->|TLS Handshake| TLS[SSL Inspector]
+        Probe -->|TTFB & Total Latency| HTTP[HTTPX Async Client]
+    end
+    
+    Sched -.->|Query Due Sites| DB
+    Probe -->|Store Metrics| DB
+    
+    subgraph ML [Future AIOps Intelligence Pipeline]
+        DB --> MetricsStream[Telemetry Stream]
+        MetricsStream --> AD[Anomaly Detection - Isolation Forest / Ruptures]
+        AD --> Alerts[Alerting Dispatcher - Slack / Email / Webhook]
+    end
 ```
-
-> **Note:** The architecture above represents the end-to-end target design. Current implementation status: **Phase 1 (Environment Setup)** and **Phase 2 (Infrastructure Dataset Generation)** are completed.
 
 ---
 
-## Project Structure
+## 3. Technology Stack
+
+- **Runtime & Language:** Python 3.10+ (tested on Python 3.12)
+- **Web API Framework:** [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/)
+- **HTTP Client:** [HTTPX](https://www.python-httpx.org/) (Asynchronous, HTTP/1.1 and HTTP/2)
+- **DNS & Cryptography:** `dnspython`, `cryptography`
+- **Scheduler:** `APScheduler` (Background periodic execution)
+- **Database & ORM:** SQLite3 (dev), `SQLAlchemy` 2.0, `psycopg2-binary` (PostgreSQL / TimescaleDB)
+- **Data & Machine Learning:** `pandas`, `numpy`, `scikit-learn`, `statsmodels`, `ruptures`, `mlflow`
+- **Containerization:** Docker, Docker Compose
+- **Testing:** `pytest`, `pytest-asyncio`
+
+---
+
+## 4. Project Structure
 
 ```text
 AIOps-Cloud-Infrastructure-Anomaly-Detection/
 │
-├── data/
-│   ├── raw/                           # Ingested raw telemetry and metric files
-│   │   ├── infrastructure_metrics.csv        # Full 10,000-row synthetic dataset
-│   │   ├── infrastructure_metrics_sample.csv # 100-row quick inspection sample
-│   │   └── dataset_summary.txt               # Statistical & distributional summary
-│   │
-│   ├── processed/                     # Cleaned, normalized, and feature-engineered datasets
-│   │
-│   └── visualizations/                # High-resolution exploratory analysis charts
-│       ├── cpu_usage.png
-│       ├── memory_usage.png
-│       ├── disk_usage.png
-│       ├── network_in.png
-│       ├── network_out.png
-│       ├── request_count.png
-│       ├── response_time.png
-│       ├── anomaly_distribution.png
-│       ├── anomaly_type_distribution.png
-│       └── correlation_heatmap.png
-│
-├── notebooks/
-│   └── exploratory_analysis.ipynb     # Interactive EDA notebook with verified outputs
-│
-├── src/                               # Core application package
+├── api/                               # REST API layer
 │   ├── __init__.py
-│   ├── data_generator.py              # Synthetic telemetry & anomaly injection engine
-│   ├── data_validation.py             # 16-point automated data validation suite
-│   ├── data_collection.py             # Ingestion interface & telemetry helpers
-│   ├── preprocessing.py               # Phase 3 placeholder (scaling & features)
-│   ├── anomaly_detection.py           # Phase 4 placeholder (Isolation Forest)
-│   ├── alert_system.py                # Phase 5 placeholder (alert dispatch)
-│   └── evaluation.py                  # Phase 4/8 placeholder (evaluation metrics)
+│   └── app.py                         # FastAPI routes, middleware, lifespan
 │
-├── scripts/
-│   └── generate_dataset.py            # CLI pipeline to generate, validate, and plot
-│
-├── api/                               # REST API serving telemetry and anomaly feeds
+├── monitoring/                        # Core probing and security engines
 │   ├── __init__.py
-│   └── app.py
+│   ├── engine.py                      # HTTP, TTFB, DNS, SSL telemetry probe
+│   └── security.py                    # Anti-SSRF, DNS resolution, port validation
 │
-├── dashboard/                         # Grafana dashboards and provisioning assets
-├── models/                            # Serialized model weights and scalers
-│
-├── tests/                             # Unit and integration test suite
+├── database/                          # Persistence layer
 │   ├── __init__.py
-│   ├── test_setup.py                  # Phase 1 setup verification
-│   ├── test_data_generator.py         # Generation bounds, logic, & reproducibility tests
-│   └── test_data_validation.py        # Validation engine error-detection tests
+│   └── db.py                          # Schema initialization, CRUD, aggregate stats
 │
-├── config.py                          # Centralized configuration and path management
-├── main.py                            # Initial execution entry-point
-├── requirements.txt                   # Reproducible project dependencies
-├── .gitignore                         # Comprehensive Git exclusions
-├── .env.example                       # Environment variables template
-├── .flake8                            # Code style configuration (Black + Flake8)
-├── README.md                          # Project documentation
-└── LICENSE                            # MIT License
+├── services/                          # Domain business logic
+│   ├── __init__.py
+│   └── website_service.py             # Website registration, probe orchestration
+│
+├── scheduler/                         # Background job runner
+│   ├── __init__.py
+│   └── monitor_scheduler.py           # Periodic due-check evaluator and dispatcher
+│
+├── models/                            # Data contracts and schemas
+│   ├── __init__.py
+│   └── schemas.py                     # Pydantic v2 request/response schemas
+│
+├── config/                            # Structured configuration & logging
+│   ├── __init__.py
+│   └── logging_config.py              # Structured JSON / console logger
+│
+├── anomaly_detection/                 # Machine learning anomaly detection
+│   └── __init__.py
+│
+├── alerting/                          # Alerting and webhook dispatchers
+│   └── __init__.py
+│
+├── tests/                             # Automated test suite
+│   ├── __init__.py
+│   ├── test_setup.py                  # Environment and directory structure tests
+│   ├── test_security.py               # Anti-SSRF boundary tests
+│   ├── test_monitoring_engine.py      # HTTP/DNS/SSL probe unit tests
+│   ├── test_database.py               # SQLite persistence and query tests
+│   ├── test_api.py                    # FastAPI endpoint integration tests
+│   └── test_scheduler.py              # Interval evaluation tests
+│
+├── data/                              # Local database and persistent storage
+├── config.py                          # Centralized environment configuration
+├── main.py                            # CLI entry-point and server launcher
+├── requirements.txt                   # Locked project dependencies
+├── Dockerfile                         # Container definition
+├── docker-compose.yml                 # Multi-container stack (API, TimescaleDB, Grafana)
+├── .dockerignore                      # Docker build exclusions
+├── .env.example                       # Environment configuration template
+├── pytest.ini                         # Pytest configuration
+└── README.md                          # Documentation
 ```
 
 ---
 
-## Phase 2: Synthetic Telemetry Generation & Analysis
+## 5. Getting Started
 
-### Why Synthetic Infrastructure Data?
-In real-world cloud environments, production failures, severe memory leaks, and distributed denial-of-service attacks are rare, uncoordinated events. Collecting labeled production incident data often requires months of waiting or dangerous production fault injection. 
+### Local Setup (Virtual Environment)
 
-For Phase 2, we generate a high-fidelity synthetic cloud infrastructure dataset simulating an **AWS EC2 compute instance** (`i-0f8b3c4a2d1e98765`) over **10,000 continuous minutes** (~6.94 days). This provides:
-1. **Ground-Truth Calibration:** Exact knowledge of anomaly onset, duration, and failure type to evaluate machine learning models rigorously.
-2. **Realistic Metric Interdependencies:** Normal workload cycles where request volume drives CPU and network usage, and server load affects latency.
-3. **Controlled Contamination:** Precisely calibrated 5.0% anomaly rate across 6 distinct failure scenarios.
+1. **Clone the repository and enter directory:**
+   ```bash
+   git clone <repo-url>
+   cd AIOps-Cloud-Infrastructure-Anomaly-Detection
+   ```
 
-> **Important:** This dataset is simulated infrastructure telemetry designed for ML benchmarking; live AWS CloudWatch ingestion is introduced in Phase 6.
+2. **Create and activate a Python 3.12 virtual environment:**
+   ```bash
+   python -m venv venv
+   # Windows PowerShell:
+   .\venv\Scripts\Activate.ps1
+   # Linux/macOS:
+   source venv/bin/activate
+   ```
 
-### Dataset Schema & Metric Definitions
-The dataset is persisted to `data/raw/infrastructure_metrics.csv` with the following 11 columns:
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-| Column | Data Type | Units / Range | Description |
-|---|---|---|---|
-| `timestamp` | String (ISO) | YYYY-MM-DD HH:MM:SS | Date and time of observation (1-minute intervals) |
-| `instance_id` | String | String | Simulated AWS EC2 instance identifier (`i-0f8b3c4a2d1e98765`) |
-| `cpu_usage` | Float64 | 0.0% – 100.0% | Percentage CPU processor utilization |
-| `memory_usage` | Float64 | 0.0% – 100.0% | Percentage RAM occupancy |
-| `disk_usage` | Float64 | 0.0% – 100.0% | Percentage root storage volume occupancy |
-| `network_in` | Float64 | Mbps (≥ 0.0) | Inbound network traffic throughput |
-| `network_out` | Float64 | Mbps (≥ 0.0) | Outbound network traffic throughput |
-| `request_count` | Int64 | Requests/min (≥ 0) | Incoming application HTTP/API request volume |
-| `response_time` | Float64 | Milliseconds (> 0.0) | Application response latency |
-| `anomaly_label` | Int64 | 0 or 1 | Ground truth indicator (0 = Normal, 1 = Anomaly) |
-| `anomaly_type` | String | Categorical | Specific failure mode or `'normal'` |
+4. **Initialize database and check environment:**
+   ```bash
+   python main.py
+   ```
 
-### Normal Behavior Simulation
-Normal behavior is not a series of static numbers, but a dynamic, interconnected system:
-- **Diurnal Cycles:** A 24-hour sinusoidal workload simulates peak afternoon traffic (14:00) and nocturnal lulls (03:00), with reduced activity on weekends.
-- **Request Load:** Base rate of 160–420 req/min drives proportional CPU load and network packet volume.
-- **CPU Utilization:** Runs between 18% and 60% normally, with random operational fluctuations.
-- **Memory Stability:** An autoregressive AR(1) process with mean reversion around 48% and small variations.
-- **Disk Drift:** Slow, continuous storage accumulation (~41.5% to 48.8%) simulating runtime logging and cache storage.
-- **Response Time:** Normal baseline of 25–65 ms, sensitive to momentary CPU and request increases.
+5. **Start the API server and background scheduler:**
+   ```bash
+   python main.py --serve
+   # Or using uvicorn directly:
+   uvicorn api.app:app --host 127.0.0.1 --port 8000 --reload
+   ```
 
-### Anomaly Scenarios & Precedence
-The dataset injects 500 anomalous records (5.00% contamination) distributed across multi-minute incidents:
-1. **`cpu_spike` (80 records, 2 incidents):** Sudden pegging at 91–100% CPU due to runaway processes, causing thread contention and elevated response times (190–360 ms).
-2. **`memory_spike` (80 records, 2 incidents):** Rapid memory allocation reaching 91–99% occupancy, triggering swapping overhead and latency degradation.
-3. **`disk_anomaly` (80 records, 2 incidents):** Storage volume surge reaching 92–99.5% capacity, causing I/O wait.
-4. **`network_spike` (75 records, 2 incidents):** Inbound traffic surges (420–880 Mbps) and outbound floods (650–1380 Mbps) with 1,400–2,900 req/min, elevating CPU and network latency.
-5. **`combined_anomaly` (85 records, 2 incidents):** Catastrophic simultaneous breakdown (CPU > 95%, RAM > 92%, network surge, latency exploding to 850–2400 ms).
-6. **`gradual_degradation` (100 records, 1 continuous incident):** Unchecked memory leak where RAM climbs progressively from baseline to 96%, CPU rises to 86%, and response latency escalates exponentially from 45 ms to over 600 ms.
-
-*Precedence Hierarchy:* If incident windows ever overlap, labels resolve deterministically:  
-`combined_anomaly` > `gradual_degradation` > `cpu_spike` > `memory_spike` > `disk_anomaly` > `network_spike` > `normal`.
-
-### Data Validation Engine
-`src/data_validation.py` executes an automated **16-point integrity inspection** on every generated dataset:
-- [x] Record count matches target (10,000)
-- [x] All 11 required columns exist
-- [x] Zero duplicate timestamps
-- [x] Strictly monotonic increasing timestamps
-- [x] Zero missing/null values across all columns
-- [x] CPU usage bounded in [0, 100]
-- [x] Memory usage bounded in [0, 100]
-- [x] Disk usage bounded in [0, 100]
-- [x] Network metrics (in/out) strictly non-negative
-- [x] Request count non-negative integers
-- [x] Response time strictly positive (> 0 ms)
-- [x] Anomaly label strictly binary ({0, 1})
-- [x] Anomaly type matches valid catalog
-- [x] Label=0 strictly implies Type='normal'
-- [x] Label=1 strictly implies Type!='normal'
-- [x] Anomaly percentage within target tolerance (4.0% – 6.0%)
+6. **Access Interactive API Documentation:**
+   - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+   - ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ---
 
-## Dataset Generation & CLI Usage
+### Docker & Docker Compose Setup
 
-Regenerate the entire dataset, validate integrity, and re-render all exploratory charts using a single command:
+Run the full stack (FastAPI API, TimescaleDB, Grafana) with a single command:
 
 ```bash
-# Using default parameters (10,000 records, seed 42)
-python scripts/generate_dataset.py
+docker compose up -d --build
+```
 
-# Optional: customize record count and seed
-python scripts/generate_dataset.py --records 10000 --seed 42
+- **API:** `http://localhost:8000`
+- **TimescaleDB:** `localhost:5432`
+- **Grafana:** `http://localhost:3000` (User: `admin`, Pass: `admin`)
 
-# Optional: skip rendering visualization PNGs
-python scripts/generate_dataset.py --skip-viz
+---
+
+## 6. REST API Reference
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Service health status |
+| `POST` | `/api/v1/websites` | Register a new website for continuous monitoring |
+| `GET` | `/api/v1/websites` | List all registered websites and latest check status |
+| `GET` | `/api/v1/websites/{id}` | Get website metadata and aggregated performance statistics |
+| `PATCH` | `/api/v1/websites/{id}` | Update monitoring interval, name, or active status |
+| `DELETE` | `/api/v1/websites/{id}` | Delete website and historical metrics |
+| `POST` | `/api/v1/websites/{id}/check` | Trigger an immediate on-demand probe |
+| `GET` | `/api/v1/websites/{id}/metrics` | Retrieve time-series historical telemetry data |
+| `GET` | `/api/v1/websites/{id}/stats` | Get aggregate uptime percentage, average TTFB, and latency |
+
+### Example: Register a Website
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/websites" \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://example.com", "name": "Example Prod", "check_interval": 60}'
+```
+
+### Example Response:
+
+```json
+{
+  "id": 1,
+  "url": "https://example.com/",
+  "name": "Example Prod",
+  "check_interval": 60,
+  "is_active": true,
+  "created_at": "2026-03-01T12:00:00Z",
+  "latest_check": {
+    "is_up": true,
+    "status": "UP",
+    "http_status_code": 200,
+    "response_time_ms": 45.2,
+    "ttfb_ms": 28.1,
+    "dns_time_ms": 8.4,
+    "ssl_valid": true,
+    "ssl_days_remaining": 280,
+    "response_size_bytes": 1256,
+    "redirect_count": 0
+  }
+}
 ```
 
 ---
 
-## Installation & Setup Instructions
+## 7. Running the Test Suite
 
-### 1. Prerequisites
-- **Python**: Version 3.10 or newer (tested with Python 3.12).
-- **Git**: Installed and available in your shell.
+Execute the test suite with coverage and verbose reporting:
 
-### 2. Clone the Repository & Navigate to Root
 ```bash
-git clone <repository-url>
-cd AIOps-Cloud-Infrastructure-Anomaly-Detection
-```
-
-### 3. Create a Virtual Environment
-- **Windows (PowerShell / Command Prompt):**
-  ```powershell
-  python -m venv venv
-  .\venv\Scripts\activate
-  ```
-- **Linux / macOS:**
-  ```bash
-  python3 -m venv venv
-  source venv/bin/activate
-  ```
-
-### 4. Install Dependencies
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### 5. Configure Environment Variables
-Copy the template configuration file to `.env`:
-- **Windows:**
-  ```powershell
-  Copy-Item .env.example .env
-  ```
-- **Linux / macOS:**
-  ```bash
-  cp .env.example .env
-  ```
-
-### 6. Register the Jupyter Kernel
-Register the project virtual environment with Jupyter:
-```bash
-python -m ipykernel install --user --name AIOps-Anomaly-Detection --display-name "Python (AIOps-Anomaly-Detection)"
-```
-
-### 7. Run Initialization & Verification Tests
-```bash
-# Run entry-point
-python main.py
-
-# Run all automated unit and integration tests (51 tests)
 pytest -v
-
-# Run code style and linting checks
-flake8 src/ scripts/ tests/
 ```
 
-### 8. Interactive Notebook Exploration
-Open Jupyter Notebook and execute `notebooks/exploratory_analysis.ipynb`:
-```bash
-jupyter notebook notebooks/exploratory_analysis.ipynb
-```
+The test suite validates:
+- Project directories and required dependencies (`test_setup.py`)
+- Anti-SSRF boundary enforcement and URL normalization (`test_security.py`)
+- Real-time HTTP/DNS/SSL probe behavior and error classification (`test_monitoring_engine.py`)
+- SQLite persistence, hypertable queries, and uptime aggregations (`test_database.py`)
+- FastAPI endpoints, error handling, and status codes (`test_api.py`)
+- Scheduler due-time interval evaluation and dispatching (`test_scheduler.py`)
 
 ---
 
-## Development Roadmap
+## 8. License
 
-The project is structured across eight organized phases:
-
-1. **Phase 1: Project Initialization & Environment Setup** *(Completed)*: Folder structure, virtual environment, dependency management, baseline testing, and configuration.
-2. **Phase 2: Infrastructure Dataset Generation** *(Completed)*: Simulation of realistic server metric streams (CPU, RAM, Disk, Network, Requests, Latency), 16-point validation suite, exploratory charts, and ground-truth labeling.
-3. **Phase 3: Data Preprocessing & Exploratory Analysis**: Metric normalization, feature transformation, rolling aggregations, and EDA notebook.
-4. **Phase 4: Isolation Forest Model Development**: Model training, contamination tuning, scoring anomaly thresholds, and serializing model artifacts.
-5. **Phase 5: Alert System**: Real-time evaluation engine and severity-based alerting mechanism (Critical, High, Warning).
-6. **Phase 6: AWS CloudWatch Integration**: Live ingestion pipeline querying CloudWatch metrics via Boto3.
-7. **Phase 7: Flask API & Grafana Dashboard**: REST API endpoints for metric querying and Grafana live dashboard integration.
-8. **Phase 8: Testing, Deployment & Documentation**: Automated end-to-end testing, Docker containerization, and production operations guide.
-
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

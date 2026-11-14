@@ -1,0 +1,36 @@
+# Version control
+.git/
+.gitignore
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Environments
+venv/
+.venv/
+env/
+.env
+
+# Local database and persistent storage
+data/*.db
+data/*.sqlite3
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Documentation and scratch
+*.log
+logs/*.log
+

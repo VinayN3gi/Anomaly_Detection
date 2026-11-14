@@ -205,7 +205,9 @@ async def check_website_async(
             max_redirects=max_redirects,
             verify=True,
         ) as client:
-            async with client.stream("GET", normalized_url, headers=headers) as response:
+            async with client.stream(
+                "GET", normalized_url, headers=headers
+            ) as response:
                 ttfb_ms = round((time.perf_counter() - t_start) * 1000, 2)
                 status_code = response.status_code
                 redirect_count = len(response.history)
@@ -292,4 +294,3 @@ def check_website(
             max_redirects=max_redirects,
         )
     )
-
