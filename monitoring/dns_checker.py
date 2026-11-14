@@ -17,7 +17,7 @@ import dns.exception
 import dns.resolver
 
 from monitoring.timing import elapsed_ms, monotonic_now
-from monitoring.url_validator import SecurityValidationError, is_ip_private_or_reserved
+from monitoring.url_validator import is_ip_private_or_reserved
 
 logger = logging.getLogger("aiops.dns")
 

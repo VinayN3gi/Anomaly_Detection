@@ -7,7 +7,6 @@ following with per-hop anti-SSRF vetting and response body size bounding.
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
 import logging
 from urllib.parse import urljoin

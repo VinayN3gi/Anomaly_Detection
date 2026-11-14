@@ -8,7 +8,6 @@ Never fabricates timing values; unavailable metrics are stored as None (NULL).
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import logging

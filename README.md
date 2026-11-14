@@ -16,22 +16,36 @@ Traditional ping checks only report binary up/down status without revealing subt
 ### Key Capabilities
 
 1. **Universal Hosting Support:** Monitor websites on Vercel, Netlify, AWS, Render, DigitalOcean, VPS, or bare-metal servers.
-2. **Deep Telemetry Collection:**
-   - **Uptime Status:** Binary `UP` / `DOWN` determination.
-   - **HTTP Status Code:** Accurate code tracking (`200`, `404`, `500`, `502`, etc.).
-   - **Total Response Time:** End-to-end request latency (ms).
-   - **Time to First Byte (TTFB):** Server processing and initial response time (ms).
-   - **DNS Resolution Time:** Domain lookup latency (ms).
-   - **SSL/TLS Certificate Inspection:** Validity verification and days until expiration.
-   - **Payload Size & Redirects:** Response size (bytes) and redirect hop count.
-   - **Error Categorization:** Detailed root-cause capture (DNS failure, connection timeout, HTTP 5xx).
+2. **Deep Telemetry Collection (Phase 2 Probing Engine):**
+   - **Multi-Phase Probing:** 4-stage pipeline: (1) URL/SSRF Security Validation, (2) DNS Resolution, (3) TLS Handshake Inspection, (4) HTTP Streaming Telemetry.
+   - **Isolated Timing Metrics:**
+     - DNS Lookup Duration (`dns_lookup_ms` via `dnspython`)
+     - TCP Connection Duration (`tcp_connect_ms`)
+     - TLS Handshake Duration (`tls_handshake_ms` via `loop.start_tls` and `truststore`)
+     - Time to First Byte (`ttfb_ms` via HTTPX streaming headers)
+     - Content Download Duration (`download_ms`)
+     - Total Request Duration (`total_time_ms`)
+   - **Availability Determination:**
+     - HTTP 2xx/3xx: `UP` (`is_success=True`)
+     - HTTP 4xx: `UP` (`is_success=False`, client-side error)
+     - HTTP 5xx: `DOWN` (`is_success=False`, server fault)
+     - Timeouts / DNS Failures / Connection Refusals: `DOWN` (`is_success=False`)
+   - **SSL/TLS Certificate Inspection:** Certificate validity, expiration date, and remaining days.
+   - **Payload Size & Redirects:** Safe redirect following with per-hop SSRF validation, hop count, and response size guards.
+   - **No Fabricated Data:** Unperformed or failed phases cleanly record `None` rather than fake values.
 3. **Strict Network & Anti-SSRF Security:**
    - Prohibits private/link-local/loopback IP addresses (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `::1`).
    - Blocks cloud metadata endpoints (`169.254.169.254`, `169.254.170.2`, `fd00:ec2::254`).
-   - Prevents DNS rebinding by validating all resolved IP addresses before probing.
+   - Prevents DNS rebinding by validating all resolved IP addresses before probing and passing pre-resolved IPs.
    - Enforces allowed schemes (`http`, `https`) and standard web ports (`80`, `443`, `8080`, `8443`).
-4. **Asynchronous Background Scheduling:** Non-blocking periodic checks per configured interval (default 60 seconds).
-5. **Dual Database Architecture:** Lightweight SQLite for local development; PostgreSQL / TimescaleDB ready for production.
+   - Enforces minimum monitoring interval of 60 seconds.
+4. **Asynchronous Background Scheduling:**
+   - Powered by `APScheduler` (`AsyncIOScheduler`) with non-blocking execution.
+   - Concurrency limits enforced via `asyncio.Semaphore` (configurable).
+   - Overlap guard prevents duplicate concurrent probes for the same website.
+5. **Dual Database Architecture & SQLAlchemy ORM:**
+   - SQLAlchemy 2.0 declarative models (`Website`, `MonitoringResult`) with cascading deletes.
+   - SQLite for local development and integration tests; PostgreSQL / TimescaleDB ready for production time-series scale.
 
 ---
 
@@ -87,12 +101,20 @@ AIOps-Cloud-Infrastructure-Anomaly-Detection/
 │
 ├── monitoring/                        # Core probing and security engines
 │   ├── __init__.py
-│   ├── engine.py                      # HTTP, TTFB, DNS, SSL telemetry probe
-│   └── security.py                    # Anti-SSRF, DNS resolution, port validation
+│   ├── timing.py                      # Monotonic clock instrumentation
+│   ├── security.py                    # Anti-SSRF, DNS resolution, port validation
+│   ├── url_validator.py               # Security validation shim
+│   ├── dns_checker.py                 # Async DNS resolver with dnspython
+│   ├── ssl_checker.py                 # Async TLS handshake & cert inspection
+│   ├── http_checker.py                # HTTPX streaming telemetry probe
+│   ├── probe_engine.py                # 4-Phase orchestrator (ProbeResult)
+│   └── engine.py                      # Backward-compatibility engine
 │
 ├── database/                          # Persistence layer
 │   ├── __init__.py
-│   └── db.py                          # Schema initialization, CRUD, aggregate stats
+│   ├── db.py                          # SQLite schema initialization and legacy queries
+│   ├── models.py                      # SQLAlchemy 2.0 declarative models (Website, MonitoringResult)
+│   └── repository.py                  # MonitoringRepository CRUD and aggregation layer
 │
 ├── services/                          # Domain business logic
 │   ├── __init__.py
@@ -100,7 +122,7 @@ AIOps-Cloud-Infrastructure-Anomaly-Detection/
 │
 ├── scheduler/                         # Background job runner
 │   ├── __init__.py
-│   └── monitor_scheduler.py           # Periodic due-check evaluator and dispatcher
+│   └── monitor_scheduler.py           # APScheduler periodic runner with concurrency & overlap guard
 │
 ├── models/                            # Data contracts and schemas
 │   ├── __init__.py
@@ -108,22 +130,29 @@ AIOps-Cloud-Infrastructure-Anomaly-Detection/
 │
 ├── config/                            # Structured configuration & logging
 │   ├── __init__.py
+│   ├── settings.py                    # Environment settings
 │   └── logging_config.py              # Structured JSON / console logger
 │
-├── anomaly_detection/                 # Machine learning anomaly detection
+├── anomaly_detection/                 # Machine learning anomaly detection (Phase 3)
 │   └── __init__.py
 │
-├── alerting/                          # Alerting and webhook dispatchers
+├── alerting/                          # Alerting and webhook dispatchers (Phase 4)
 │   └── __init__.py
 │
-├── tests/                             # Automated test suite
+├── tests/                             # Automated test suite (153 tests)
 │   ├── __init__.py
 │   ├── test_setup.py                  # Environment and directory structure tests
 │   ├── test_security.py               # Anti-SSRF boundary tests
+│   ├── test_url_validator.py          # Strict URL validation and SSRF tests
+│   ├── test_dns_checker.py            # DNS checker tests
+│   ├── test_ssl_checker.py            # SSL inspection and cert parsing tests
+│   ├── test_http_checker.py           # HTTP checker and streaming telemetry tests
+│   ├── test_probe_engine.py           # 4-phase probe engine pipeline tests
+│   ├── test_monitoring_repository.py  # SQLAlchemy repository and FK cascade tests
 │   ├── test_monitoring_engine.py      # HTTP/DNS/SSL probe unit tests
 │   ├── test_database.py               # SQLite persistence and query tests
 │   ├── test_api.py                    # FastAPI endpoint integration tests
-│   └── test_scheduler.py              # Interval evaluation tests
+│   └── test_scheduler.py              # APScheduler interval, concurrency, and lifecycle tests
 │
 ├── data/                              # Local database and persistent storage
 ├── config.py                          # Centralized environment configuration

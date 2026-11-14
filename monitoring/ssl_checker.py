@@ -83,8 +83,6 @@ async def check_ssl(
     target_host = ip_address or hostname
     context = ssl.create_default_context()
 
-    t_start = monotonic_now()
-
     try:
         reader, writer = await asyncio.wait_for(
             asyncio.open_connection(host=target_host, port=port),

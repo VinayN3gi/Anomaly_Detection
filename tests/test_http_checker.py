@@ -1,6 +1,5 @@
 """Unit tests for instrumented HTTP telemetry and probe checker."""
 
-from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 

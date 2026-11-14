@@ -4,10 +4,8 @@ import pytest
 
 from monitoring.url_validator import (
     SecurityValidationError,
-    is_ip_private_or_reserved,
     validate_url_security,
 )
-import ipaddress
 
 
 class TestURLValidator:

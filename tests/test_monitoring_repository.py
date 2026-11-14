@@ -3,7 +3,7 @@
 from pathlib import Path
 import pytest
 
-from database.models import MonitoringResult, Website
+from database.models import MonitoringResult
 from database.repository import (
     MonitoringRepository,
     WebsiteAlreadyExistsError,

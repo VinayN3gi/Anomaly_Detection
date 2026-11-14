@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 import config
 from database.models import Base, MonitoringResult, Website
 from monitoring.probe_engine import ProbeResult
-from monitoring.url_validator import SecurityValidationError, validate_url_security
+from monitoring.url_validator import validate_url_security
 
 
 @event.listens_for(Engine, "connect")
