@@ -1,7 +1,8 @@
-"""SQLite Database Layer for Universal Website Monitoring.
+"""Database Layer for Universal Website Monitoring.
 
 Provides persistent storage, connection pooling conventions, and schema
 management for registered websites and time-series monitoring metrics.
+Supports both direct SQLite access and SQLAlchemy engine/session interoperability.
 """
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
-from typing import Generator
+from typing import Any, Generator
 
 import config
 from monitoring.engine import WebsiteCheckResult
@@ -44,6 +45,16 @@ CREATE TABLE IF NOT EXISTS monitoring_checks (
     redirect_count INTEGER NOT NULL DEFAULT 0,
     resolved_ip TEXT,
     error_message TEXT,
+    dns_lookup_ms REAL,
+    tcp_connect_ms REAL,
+    tls_handshake_ms REAL,
+    download_ms REAL,
+    total_time_ms REAL,
+    http_status INTEGER,
+    ssl_expiry_days INTEGER,
+    dns_success INTEGER NOT NULL DEFAULT 1,
+    is_success INTEGER NOT NULL DEFAULT 1,
+    error_type TEXT,
     FOREIGN KEY (website_id) REFERENCES websites(id) ON DELETE CASCADE
 );
 
@@ -78,7 +89,7 @@ def get_db(
 ) -> Generator[sqlite3.Connection, None, None]:
     """Context manager yielding SQLite connection configured with row factory."""
     target_path = get_db_path(db_path)
-    conn = sqlite3.connect(target_path, timeout=10.0)
+    conn = sqlite3.connect(target_path, timeout=15.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     try:
@@ -93,30 +104,45 @@ def get_db(
 
 def save_check_result(
     website_id: int,
-    result: WebsiteCheckResult,
+    result: WebsiteCheckResult | Any,
     db_path: Path | str | None = None,
 ) -> int:
     """Persist an individual monitoring check result to SQLite.
 
     Args:
         website_id: Foreign key ID of registered website.
-        result: WebsiteCheckResult object.
+        result: WebsiteCheckResult or ProbeResult object.
         db_path: Optional custom database path.
 
     Returns:
         Generated primary key check ID.
     """
+    http_code = getattr(result, "http_status", getattr(result, "http_status_code", None))
+    is_up_int = 1 if getattr(result, "is_up", result.status == "UP") else 0
+    total_time = getattr(result, "total_time_ms", getattr(result, "response_time_ms", 0.0))
+    dns_time = getattr(result, "dns_lookup_ms", getattr(result, "dns_time_ms", 0.0))
+    ssl_days = getattr(result, "ssl_expiry_days", getattr(result, "ssl_days_remaining", None))
+    dns_succ = 1 if getattr(result, "dns_success", True) else 0
+    is_succ = 1 if getattr(result, "is_success", is_up_int == 1) else 0
+    err_type = getattr(result, "error_type", None)
+
     query = """
     INSERT INTO monitoring_checks (
         website_id, timestamp, is_up, status, http_status_code,
         response_time_ms, ttfb_ms, dns_time_ms, ssl_valid,
         ssl_expiry_date, ssl_days_remaining, response_size_bytes,
-        redirect_count, resolved_ip, error_message
+        redirect_count, resolved_ip, error_message,
+        dns_lookup_ms, tcp_connect_ms, tls_handshake_ms, download_ms,
+        total_time_ms, http_status, ssl_expiry_days, dns_success,
+        is_success, error_type
     ) VALUES (
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
         ?, ?, ?,
-        ?, ?, ?
+        ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?
     );
     """
     with get_db(db_path) as conn:
@@ -125,19 +151,29 @@ def save_check_result(
             (
                 website_id,
                 result.timestamp,
-                1 if result.is_up else 0,
+                is_up_int,
                 result.status,
-                result.http_status_code,
-                result.response_time_ms,
-                result.ttfb_ms,
-                result.dns_time_ms,
+                http_code,
+                total_time or 0.0,
+                result.ttfb_ms or 0.0,
+                dns_time or 0.0,
                 None if result.ssl_valid is None else (1 if result.ssl_valid else 0),
                 result.ssl_expiry_date,
-                result.ssl_days_remaining,
-                result.response_size_bytes,
-                result.redirect_count,
+                ssl_days,
+                result.response_size_bytes or 0,
+                result.redirect_count or 0,
                 result.resolved_ip,
                 result.error_message,
+                dns_time,
+                getattr(result, "tcp_connect_ms", None),
+                getattr(result, "tls_handshake_ms", None),
+                getattr(result, "download_ms", None),
+                total_time,
+                http_code,
+                ssl_days,
+                dns_succ,
+                is_succ,
+                err_type,
             ),
         )
         return cursor.lastrowid or 0
