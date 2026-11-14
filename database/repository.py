@@ -10,13 +10,25 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, desc, func, select
+from sqlalchemy import create_engine, desc, event, func, select
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 import config
 from database.models import Base, MonitoringResult, Website
 from monitoring.probe_engine import ProbeResult
 from monitoring.url_validator import SecurityValidationError, validate_url_security
+
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Enforce SQLite foreign key cascades on every connection."""
+    try:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+    except Exception:
+        pass
 
 
 class WebsiteNotFoundError(Exception):

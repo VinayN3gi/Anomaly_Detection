@@ -79,6 +79,7 @@ class MonitoringScheduler:
         self._is_running = False
         if self.scheduler.running:
             self.scheduler.shutdown(wait=False)
+            await asyncio.sleep(0.01)
         logger.info("MonitoringScheduler stopped cleanly.")
 
     async def run_due_checks(self) -> list[int]:
