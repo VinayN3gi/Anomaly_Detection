@@ -1,4 +1,4 @@
-"""Centralized Configuration Module for AIOps Cloud Infrastructure Anomaly Detection.
+"""Centralized Configuration Module for AIOps Anomaly Detection.
 
 Uses pathlib for cross-platform path handling, resolving all paths relative
 to the project root directory.
@@ -10,7 +10,8 @@ from pathlib import Path
 PROJECT_NAME: str = "AIOps - Cloud Infrastructure Anomaly Detection"
 PROJECT_VERSION: str = "0.1.0"
 PROJECT_DESCRIPTION: str = (
-    "AIOps solution for cloud infrastructure anomaly detection using Machine Learning."
+    "AIOps solution for cloud infrastructure anomaly detection using "
+    "Machine Learning."
 )
 
 # Project root directory resolved relative to this file
@@ -48,4 +49,3 @@ def ensure_directories_exist() -> None:
     """Create essential project directories if they do not exist."""
     for directory in PROJECT_DIRECTORIES:
         directory.mkdir(parents=True, exist_ok=True)
-

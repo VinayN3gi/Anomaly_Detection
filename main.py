@@ -3,23 +3,16 @@
 Initializes and validates the project setup for Phase 1.
 """
 
-import sys
-from pathlib import Path
-
-# Add project root to sys.path if not already present
-project_root = Path(__file__).resolve().parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
 import config
 
 
 def main() -> None:
     """Print project initialization information and directory structure."""
-    print("=" * 70)
+    banner = "=" * 70
+    print(banner)
     print(f"Project Name   : {config.PROJECT_NAME}")
     print(f"Project Version: {config.PROJECT_VERSION}")
-    print("=" * 70)
+    print(banner)
     print("Status: Project environment successfully initialized (Phase 1).")
     print("\nProject Directories:")
     print(f"  - Root Directory      : {config.PROJECT_ROOT}")
@@ -32,9 +25,8 @@ def main() -> None:
     print(f"  - Dashboard Directory : {config.DASHBOARD_DIR}")
     print(f"  - Source Directory    : {config.SRC_DIR}")
     print(f"  - Tests Directory     : {config.TESTS_DIR}")
-    print("=" * 70)
+    print(banner)
 
 
 if __name__ == "__main__":
     main()
-

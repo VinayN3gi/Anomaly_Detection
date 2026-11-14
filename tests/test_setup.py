@@ -69,7 +69,8 @@ class TestConfiguration:
 
     def test_project_name(self) -> None:
         """Verify configured project name."""
-        assert config.PROJECT_NAME == "AIOps - Cloud Infrastructure Anomaly Detection"
+        expected_name = "AIOps - Cloud Infrastructure Anomaly Detection"
+        assert config.PROJECT_NAME == expected_name
 
     def test_project_root_validity(self) -> None:
         """Verify PROJECT_ROOT exists and contains essential marker files."""
@@ -81,5 +82,8 @@ class TestConfiguration:
     def test_paths_are_subpaths_of_root(self) -> None:
         """Ensure configured directories reside under the project root."""
         for directory in config.PROJECT_DIRECTORIES:
-            assert config.PROJECT_ROOT in directory.parents or directory == config.PROJECT_ROOT
-
+            is_subpath = (
+                config.PROJECT_ROOT in directory.parents
+                or directory == config.PROJECT_ROOT
+            )
+            assert is_subpath, f"{directory} not inside {config.PROJECT_ROOT}"
