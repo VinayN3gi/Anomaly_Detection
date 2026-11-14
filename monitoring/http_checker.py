@@ -254,4 +254,3 @@ async def check_http(
     finally:
         if should_close_client:
             await active_client.aclose()
-

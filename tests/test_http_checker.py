@@ -12,9 +12,7 @@ def mock_dns_resolution(monkeypatch: pytest.MonkeyPatch):
     """Ensure DNS resolution returns public IP for URL validation."""
     monkeypatch.setattr(
         "socket.getaddrinfo",
-        lambda host, port, family=0, type=0: [
-            (2, 1, 6, "", ("93.184.216.34", 80))
-        ],
+        lambda host, port, family=0, type=0: [(2, 1, 6, "", ("93.184.216.34", 80))],
     )
 
 
@@ -74,6 +72,7 @@ class TestHTTPChecker:
 
     async def test_connection_timeout(self, mock_dns_resolution) -> None:
         """Verify connection timeout is caught and categorized cleanly."""
+
         def raise_timeout(req):
             raise httpx.ConnectTimeout("Connection timed out")
 
@@ -95,7 +94,9 @@ class TestHTTPChecker:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                return httpx.Response(301, headers={"Location": "https://example.com/final"})
+                return httpx.Response(
+                    301, headers={"Location": "https://example.com/final"}
+                )
             return httpx.Response(200, text="Final Destination")
 
         transport = httpx.MockTransport(handle_redirect)
@@ -108,14 +109,20 @@ class TestHTTPChecker:
         assert result.redirect_count == 1
         assert "final" in result.final_url
 
-    async def test_redirect_to_private_ip_blocked_by_ssrf(self, mock_dns_resolution) -> None:
+    async def test_redirect_to_private_ip_blocked_by_ssrf(
+        self, mock_dns_resolution
+    ) -> None:
         """Verify redirect pointing to internal/private IP is blocked immediately."""
         transport = httpx.MockTransport(
-            lambda req: httpx.Response(302, headers={"Location": "http://127.0.0.1:8080/admin"})
+            lambda req: httpx.Response(
+                302, headers={"Location": "http://127.0.0.1:8080/admin"}
+            )
         )
         client = httpx.AsyncClient(transport=transport)
 
-        result = await check_http("https://example.com/redirect-to-internal", client=client)
+        result = await check_http(
+            "https://example.com/redirect-to-internal", client=client
+        )
 
         assert result.is_success is False
         assert result.error_type == "SSRFValidationError"
@@ -124,11 +131,15 @@ class TestHTTPChecker:
     async def test_too_many_redirects_exceeded(self, mock_dns_resolution) -> None:
         """Verify exceeding max redirect limit is halted."""
         transport = httpx.MockTransport(
-            lambda req: httpx.Response(302, headers={"Location": "https://example.com/loop"})
+            lambda req: httpx.Response(
+                302, headers={"Location": "https://example.com/loop"}
+            )
         )
         client = httpx.AsyncClient(transport=transport)
 
-        result = await check_http("https://example.com/loop", max_redirects=2, client=client)
+        result = await check_http(
+            "https://example.com/loop", max_redirects=2, client=client
+        )
 
         assert result.is_success is False
         assert result.error_type == "TooManyRedirectsError"
@@ -153,4 +164,3 @@ class TestHTTPChecker:
         assert result.is_success is False
         assert result.error_type == "ResponseSizeLimitExceededError"
         assert "exceeded limit" in result.error_message
-

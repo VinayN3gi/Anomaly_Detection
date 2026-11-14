@@ -108,18 +108,14 @@ class TestURLValidator:
         """Verify DNS rebinding / hostnames resolving to private IPs are caught."""
         monkeypatch.setattr(
             "socket.getaddrinfo",
-            lambda host, port, family=0, type=0: [
-                (2, 1, 6, "", ("10.0.0.5", 80))
-            ],
+            lambda host, port, family=0, type=0: [(2, 1, 6, "", ("10.0.0.5", 80))],
         )
         with pytest.raises(
             SecurityValidationError, match="resolves to private/reserved IP"
         ):
             validate_url_security("http://evil-internal-rebinding.com")
 
-    @pytest.mark.parametrize(
-        "disallowed_port", [21, 22, 25, 3306, 5432, 6379, 27017]
-    )
+    @pytest.mark.parametrize("disallowed_port", [21, 22, 25, 3306, 5432, 6379, 27017])
     def test_disallowed_ports_blocked(
         self, disallowed_port: int, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -144,4 +140,3 @@ class TestURLValidator:
             validate_url_security("")
         with pytest.raises(SecurityValidationError):
             validate_url_security("   ")
-

@@ -159,7 +159,9 @@ class MonitoringScheduler:
                     pass
                 return result
             except Exception as exc:
-                logger.exception("Unexpected error probing website %d (%s): %s", website_id, url, exc)
+                logger.exception(
+                    "Unexpected error probing website %d (%s): %s", website_id, url, exc
+                )
                 failed_res = ProbeResult(
                     url=url,
                     timestamp=datetime.now(timezone.utc).isoformat(),

@@ -211,8 +211,12 @@ async def probe_website(
         status_label = "DOWN"
         is_success = False
 
-    error_type = http_res.error_type or (ssl_res.error_type if not ssl_res.is_valid else None)
-    error_msg = http_res.error_message or (ssl_res.error_message if not ssl_res.is_valid else None)
+    error_type = http_res.error_type or (
+        ssl_res.error_type if not ssl_res.is_valid else None
+    )
+    error_msg = http_res.error_message or (
+        ssl_res.error_message if not ssl_res.is_valid else None
+    )
 
     return ProbeResult(
         url=norm_url,
@@ -236,4 +240,3 @@ async def probe_website(
         error_type=error_type,
         error_message=error_msg,
     )
-

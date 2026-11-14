@@ -128,9 +128,7 @@ class TestMonitoringScheduler:
     ) -> None:
         """Verify concurrency semaphore limits simultaneous executing workers."""
         max_limit = 2
-        scheduler = MonitoringScheduler(
-            db_path=sched_db, max_concurrency=max_limit
-        )
+        scheduler = MonitoringScheduler(db_path=sched_db, max_concurrency=max_limit)
 
         current_running = 0
         peak_running = 0
@@ -160,12 +158,19 @@ class TestMonitoringScheduler:
                 error_message=None,
             )
 
+        # Patch save_check_result and repository to avoid FK constraint errors
+        # (no website rows exist in DB — this test only validates semaphore behaviour)
         with patch(
             "scheduler.monitor_scheduler.check_website_async", side_effect=slow_probe
+        ), patch("scheduler.monitor_scheduler.save_check_result"), patch.object(
+            scheduler.repository, "save_probe_result"
+        ), patch(
+            "scheduler.monitor_scheduler.save_check_result"
+        ), patch.object(
+            scheduler.repository, "save_probe_result"
         ):
             tasks = [
-                scheduler._probe_worker(i, f"https://site{i}.com")
-                for i in range(1, 6)
+                scheduler._probe_worker(i, f"https://site{i}.com") for i in range(1, 6)
             ]
             await asyncio.gather(*tasks)
 

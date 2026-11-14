@@ -120,9 +120,7 @@ class MonitoringResult(Base):
 
     website = relationship("Website", back_populates="results")
 
-    __table_args__ = (
-        Index("idx_checks_website_timestamp", "website_id", "timestamp"),
-    )
+    __table_args__ = (Index("idx_checks_website_timestamp", "website_id", "timestamp"),)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert monitoring result to dictionary representation."""
@@ -155,4 +153,3 @@ class MonitoringResult(Base):
             "dns_time_ms": self.dns_time_ms,
             "ssl_days_remaining": self.ssl_days_remaining,
         }
-

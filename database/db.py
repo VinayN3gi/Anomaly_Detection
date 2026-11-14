@@ -117,11 +117,17 @@ def save_check_result(
     Returns:
         Generated primary key check ID.
     """
-    http_code = getattr(result, "http_status", getattr(result, "http_status_code", None))
+    http_code = getattr(
+        result, "http_status", getattr(result, "http_status_code", None)
+    )
     is_up_int = 1 if getattr(result, "is_up", result.status == "UP") else 0
-    total_time = getattr(result, "total_time_ms", getattr(result, "response_time_ms", 0.0))
+    total_time = getattr(
+        result, "total_time_ms", getattr(result, "response_time_ms", 0.0)
+    )
     dns_time = getattr(result, "dns_lookup_ms", getattr(result, "dns_time_ms", 0.0))
-    ssl_days = getattr(result, "ssl_expiry_days", getattr(result, "ssl_days_remaining", None))
+    ssl_days = getattr(
+        result, "ssl_expiry_days", getattr(result, "ssl_days_remaining", None)
+    )
     dns_succ = 1 if getattr(result, "dns_success", True) else 0
     is_succ = 1 if getattr(result, "is_success", is_up_int == 1) else 0
     err_type = getattr(result, "error_type", None)

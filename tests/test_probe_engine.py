@@ -48,11 +48,17 @@ class TestProbeEngine:
             final_url="https://example.com/",
         )
 
-        with patch("monitoring.probe_engine.check_dns", new_callable=AsyncMock) as m_dns:
+        with patch(
+            "monitoring.probe_engine.check_dns", new_callable=AsyncMock
+        ) as m_dns:
             m_dns.return_value = mock_dns
-            with patch("monitoring.probe_engine.check_ssl", new_callable=AsyncMock) as m_ssl:
+            with patch(
+                "monitoring.probe_engine.check_ssl", new_callable=AsyncMock
+            ) as m_ssl:
                 m_ssl.return_value = mock_ssl
-                with patch("monitoring.probe_engine.check_http", new_callable=AsyncMock) as m_http:
+                with patch(
+                    "monitoring.probe_engine.check_http", new_callable=AsyncMock
+                ) as m_http:
                     m_http.return_value = mock_http
 
                     result: ProbeResult = await probe_website("https://example.com")
@@ -90,10 +96,16 @@ class TestProbeEngine:
             final_url="http://http-only.com/",
         )
 
-        with patch("monitoring.probe_engine.check_dns", new_callable=AsyncMock) as m_dns:
+        with patch(
+            "monitoring.probe_engine.check_dns", new_callable=AsyncMock
+        ) as m_dns:
             m_dns.return_value = mock_dns
-            with patch("monitoring.probe_engine.check_ssl", new_callable=AsyncMock) as m_ssl:
-                with patch("monitoring.probe_engine.check_http", new_callable=AsyncMock) as m_http:
+            with patch(
+                "monitoring.probe_engine.check_ssl", new_callable=AsyncMock
+            ) as m_ssl:
+                with patch(
+                    "monitoring.probe_engine.check_http", new_callable=AsyncMock
+                ) as m_http:
                     m_http.return_value = mock_http
 
                     result = await probe_website("http://http-only.com")
@@ -107,7 +119,9 @@ class TestProbeEngine:
         assert result.ssl_expiry_days is None
         assert result.ssl_expiry_date is None
 
-    async def test_dns_failure_halts_subsequent_phases(self, mock_dns_resolution) -> None:
+    async def test_dns_failure_halts_subsequent_phases(
+        self, mock_dns_resolution
+    ) -> None:
         """Verify DNS failure immediately marks probe as DOWN without attempting HTTP/TLS."""
         mock_dns = DNSResult(
             hostname="unresolvable.org",
@@ -117,10 +131,16 @@ class TestProbeEngine:
             error_message="NXDOMAIN",
         )
 
-        with patch("monitoring.probe_engine.check_dns", new_callable=AsyncMock) as m_dns:
+        with patch(
+            "monitoring.probe_engine.check_dns", new_callable=AsyncMock
+        ) as m_dns:
             m_dns.return_value = mock_dns
-            with patch("monitoring.probe_engine.check_ssl", new_callable=AsyncMock) as m_ssl:
-                with patch("monitoring.probe_engine.check_http", new_callable=AsyncMock) as m_http:
+            with patch(
+                "monitoring.probe_engine.check_ssl", new_callable=AsyncMock
+            ) as m_ssl:
+                with patch(
+                    "monitoring.probe_engine.check_http", new_callable=AsyncMock
+                ) as m_http:
 
                     result = await probe_website("https://unresolvable.org")
 
@@ -142,4 +162,3 @@ class TestProbeEngine:
         assert result.status == "DOWN"
         assert result.error_type == "SSRFValidationError"
         assert "SSRF policy" in result.error_message
-

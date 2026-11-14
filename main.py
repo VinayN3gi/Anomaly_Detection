@@ -74,9 +74,7 @@ def main() -> None:
             args.host,
             args.port,
         )
-        print(
-            f"\nLaunching FastAPI server on http://{args.host}:{args.port} ..."
-        )
+        print(f"\nLaunching FastAPI server on http://{args.host}:{args.port} ...")
         print("API Documentation available at: /docs and /redoc")
         uvicorn.run("api.app:app", host=args.host, port=args.port, reload=False)
     else:

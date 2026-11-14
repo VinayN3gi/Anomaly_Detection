@@ -88,4 +88,3 @@ class TestDNSChecker:
         res_local = await check_dns("localhost")
         assert res_local.is_success is False
         assert res_local.error_type == "SSRFValidationError"
-

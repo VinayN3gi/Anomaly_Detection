@@ -184,4 +184,3 @@ async def check_ssl(
             error_type="TLSHandshakeError",
             error_message=f"TLS handshake failed: {exc}",
         )
-

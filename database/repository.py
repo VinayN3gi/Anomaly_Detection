@@ -219,11 +219,17 @@ class MonitoringRepository:
             Created MonitoringResult record.
         """
         # Extract fields handling both ProbeResult and WebsiteCheckResult
-        http_code = getattr(result, "http_status", getattr(result, "http_status_code", None))
+        http_code = getattr(
+            result, "http_status", getattr(result, "http_status_code", None)
+        )
         is_up_bool = getattr(result, "is_up", result.status == "UP")
-        total_time = getattr(result, "total_time_ms", getattr(result, "response_time_ms", 0.0))
+        total_time = getattr(
+            result, "total_time_ms", getattr(result, "response_time_ms", 0.0)
+        )
         dns_time = getattr(result, "dns_lookup_ms", getattr(result, "dns_time_ms", 0.0))
-        ssl_days = getattr(result, "ssl_expiry_days", getattr(result, "ssl_days_remaining", None))
+        ssl_days = getattr(
+            result, "ssl_expiry_days", getattr(result, "ssl_days_remaining", None)
+        )
 
         with self.get_session() as session:
             record = MonitoringResult(
@@ -239,7 +245,11 @@ class MonitoringRepository:
                 response_size_bytes=result.response_size_bytes or 0,
                 redirect_count=result.redirect_count or 0,
                 ssl_expiry_days=ssl_days,
-                ssl_valid=1 if result.ssl_valid else (0 if result.ssl_valid is False else None),
+                ssl_valid=(
+                    1
+                    if result.ssl_valid
+                    else (0 if result.ssl_valid is False else None)
+                ),
                 ssl_expiry_date=result.ssl_expiry_date,
                 dns_success=getattr(result, "dns_success", True),
                 is_success=getattr(result, "is_success", is_up_bool),
@@ -344,4 +354,3 @@ class MonitoringRepository:
                 "min_response_time_ms": round(row.min_response_time_ms or 0.0, 2),
                 "max_response_time_ms": round(row.max_response_time_ms or 0.0, 2),
             }
-

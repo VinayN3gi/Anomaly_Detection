@@ -18,9 +18,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> MonitoringRepositor
     """Initialize an isolated MonitoringRepository using a SQLite temporary database."""
     monkeypatch.setattr(
         "socket.getaddrinfo",
-        lambda host, port, family=0, type=0: [
-            (2, 1, 6, "", ("93.184.216.34", 80))
-        ],
+        lambda host, port, family=0, type=0: [(2, 1, 6, "", ("93.184.216.34", 80))],
     )
     db_file = tmp_path / "repo_test.db"
     return MonitoringRepository(db_file)
@@ -29,7 +27,9 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> MonitoringRepositor
 class TestMonitoringRepository:
     """Validate CRUD operations, foreign-key cascading, and metric persistence."""
 
-    def test_register_website_enforces_minimum_60s_interval(self, repo: MonitoringRepository) -> None:
+    def test_register_website_enforces_minimum_60s_interval(
+        self, repo: MonitoringRepository
+    ) -> None:
         """Verify registration enforces >= 60 seconds minimum interval per Task 1."""
         site = repo.register_website(
             url="https://example.com",
@@ -53,7 +53,9 @@ class TestMonitoringRepository:
         with pytest.raises(SecurityValidationError):
             repo.register_website("http://192.168.1.1:8080/admin")
 
-    def test_website_activation_and_deactivation(self, repo: MonitoringRepository) -> None:
+    def test_website_activation_and_deactivation(
+        self, repo: MonitoringRepository
+    ) -> None:
         """Verify active status toggling."""
         site = repo.register_website("https://toggle.com")
         assert site.is_active is True
@@ -67,7 +69,9 @@ class TestMonitoringRepository:
         repo.set_website_active(site.id, True)
         assert len(repo.list_websites(active_only=True)) == 1
 
-    def test_save_and_retrieve_successful_probe(self, repo: MonitoringRepository) -> None:
+    def test_save_and_retrieve_successful_probe(
+        self, repo: MonitoringRepository
+    ) -> None:
         """Verify saving complete probe with all timing phases."""
         site = repo.register_website("https://metrics-test.com")
 
@@ -106,7 +110,9 @@ class TestMonitoringRepository:
         assert record.http_status == 200
         assert record.is_success is True
 
-    def test_save_failed_probe_with_null_timings(self, repo: MonitoringRepository) -> None:
+    def test_save_failed_probe_with_null_timings(
+        self, repo: MonitoringRepository
+    ) -> None:
         """Verify failed probe saves unavailable timing phases as NULL (None)."""
         site = repo.register_website("https://failed-test.com")
 
@@ -143,7 +149,9 @@ class TestMonitoringRepository:
         assert record.download_ms is None
         assert record.error_type == "DNSResolutionError"
 
-    def test_cascade_delete_removes_monitoring_results(self, repo: MonitoringRepository) -> None:
+    def test_cascade_delete_removes_monitoring_results(
+        self, repo: MonitoringRepository
+    ) -> None:
         """Verify deleting a website cascades and removes all associated results."""
         site = repo.register_website("https://delete-cascade.com")
 
@@ -235,4 +243,4 @@ class TestMonitoringRepository:
         assert stats["uptime_percentage"] == 50.0
         assert stats["error_rate_percentage"] == 50.0
         assert stats["avg_response_time_ms"] == 100.0  # (70 + 130) / 2
-        assert stats["avg_ttfb_ms"] == 40.0           # (30 + 50) / 2
+        assert stats["avg_ttfb_ms"] == 40.0  # (30 + 50) / 2

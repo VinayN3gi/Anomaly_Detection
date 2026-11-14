@@ -37,10 +37,14 @@ class TestSSLChecker:
 
         with patch("asyncio.open_connection", new_callable=AsyncMock) as mock_open:
             mock_open.return_value = (mock_reader, mock_writer)
-            with patch("asyncio.base_events.BaseEventLoop.start_tls", new_callable=AsyncMock) as mock_tls:
+            with patch(
+                "asyncio.base_events.BaseEventLoop.start_tls", new_callable=AsyncMock
+            ) as mock_tls:
                 mock_tls.return_value = mock_transport
 
-                result: SSLResult = await check_ssl("example.com", ip_address="93.184.216.34")
+                result: SSLResult = await check_ssl(
+                    "example.com", ip_address="93.184.216.34"
+                )
 
         assert result.is_valid is True
         assert result.days_remaining is not None and result.days_remaining > 0
@@ -62,10 +66,14 @@ class TestSSLChecker:
 
         with patch("asyncio.open_connection", new_callable=AsyncMock) as mock_open:
             mock_open.return_value = (mock_reader, mock_writer)
-            with patch("asyncio.base_events.BaseEventLoop.start_tls", new_callable=AsyncMock) as mock_tls:
+            with patch(
+                "asyncio.base_events.BaseEventLoop.start_tls", new_callable=AsyncMock
+            ) as mock_tls:
                 mock_tls.return_value = mock_transport
 
-                result: SSLResult = await check_ssl("expired.example.com", ip_address="93.184.216.34")
+                result: SSLResult = await check_ssl(
+                    "expired.example.com", ip_address="93.184.216.34"
+                )
 
         assert result.is_valid is False
         assert result.days_remaining is not None and result.days_remaining < 0
@@ -85,7 +93,9 @@ class TestSSLChecker:
                 "asyncio.base_events.BaseEventLoop.start_tls",
                 side_effect=ssl.SSLCertVerificationError("Self-signed cert"),
             ):
-                result = await check_ssl("self-signed.badssl.com", ip_address="93.184.216.34")
+                result = await check_ssl(
+                    "self-signed.badssl.com", ip_address="93.184.216.34"
+                )
 
         assert result.is_valid is False
         assert result.error_type == "SSLCertVerificationError"
@@ -95,9 +105,10 @@ class TestSSLChecker:
     async def test_connection_timeout_handling(self) -> None:
         """Verify connection timeout to TLS port is handled cleanly."""
         with patch("asyncio.open_connection", side_effect=asyncio.TimeoutError()):
-            result = await check_ssl("unresponsive.com", ip_address="93.184.216.34", timeout=0.1)
+            result = await check_ssl(
+                "unresponsive.com", ip_address="93.184.216.34", timeout=0.1
+            )
 
         assert result.is_valid is False
         assert result.error_type == "ConnectionTimeoutError"
         assert "timed out" in result.error_message
-

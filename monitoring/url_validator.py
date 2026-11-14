@@ -19,7 +19,9 @@ def is_ip_private_or_reserved(*args, **kwargs):
 
 def resolve_and_validate_hostname(*args, **kwargs):
     """Delegate dynamically to monitoring.security.resolve_and_validate_hostname."""
-    fn = getattr(_sec, "resolve_and_validate_hostname", _sec.resolve_and_validate_hostname)
+    fn = getattr(
+        _sec, "resolve_and_validate_hostname", _sec.resolve_and_validate_hostname
+    )
     return fn(*args, **kwargs)
 
 

@@ -24,8 +24,8 @@ class SecurityValidationError(ValueError):
 # Specific cloud metadata IP addresses to strictly prohibit
 BLOCKED_METADATA_IPS: set[str] = {
     "169.254.169.254",  # AWS EC2 / Azure / GCP IMDSv1/v2
-    "169.254.170.2",    # AWS ECS task metadata
-    "fd00:ec2::254",    # AWS IPv6 IMDS
+    "169.254.170.2",  # AWS ECS task metadata
+    "fd00:ec2::254",  # AWS IPv6 IMDS
 }
 
 

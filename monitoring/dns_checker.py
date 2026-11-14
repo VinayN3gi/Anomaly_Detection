@@ -187,7 +187,11 @@ async def check_dns(
             primary_ip=primary_ip,
         )
 
-    except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers, dns.resolver.NoAnswer) as exc:
+    except (
+        dns.resolver.NXDOMAIN,
+        dns.resolver.NoNameservers,
+        dns.resolver.NoAnswer,
+    ) as exc:
         return DNSResult(
             hostname=cleaned_host,
             is_success=False,
@@ -211,4 +215,3 @@ async def check_dns(
             error_type="DNSResolutionError",
             error_message=f"DNS lookup error for '{hostname}': {exc}",
         )
-
